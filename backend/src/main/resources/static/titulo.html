@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <main id="main"></main>
+  <script type="module">
+    import { api, exigirPerfil } from '/js/api.js';
+    import { esc, icono, navbar, pieDePagina, duracion, fecha, verTrailer, toast, cargando } from '/js/ui.js';
+
+    const id = Number(new URLSearchParams(location.search).get('id'));
+    const main = document.getElementById('main');
+    let d;
+
+    if (exigirPerfil()) {
+      navbar();
+      cargando(main);
+      cargar().catch(err => {
+        main.innerHTML = `<div class="vacio" style="padding-top:160px"><div class="ico">🍿</div><h2>${esc(err.message)}</h2>
+          <p><a class="btn btn-pop" href="/inicio.html" style="margin-top:16px">Volver al inicio</a></p></div>`;
+      }).finally(pieDePagina);
+    }
+
+    async function cargar() {
+      d = await api(`/api/catalogo/contenidos/${id}`, { perfil: true });
+      document.title = `${d.titulo} · NovaPop`;
+      pintar();
+    }
+
+    function botonReproducir() {
+      if (!d.disponibleParaVer) {
+        return d.urlTrailer ? `<button class="btn btn-claro" id="trailer">${icono("play")} Ver tráiler</button>` : "";
+      }
+      const p = d.progreso;
+      if (!p || p.completado) {
+        const ep = d.tipo === 'SERIE' && p?.completado ? ' (volver a ver)' : '';
+        return `<a class="btn btn-claro" href="/ver.html?id=${d.idContenido}${p?.idEpisodio && !p.completado ? '&ep=' + p.idEpisodio : ''}">${icono('play')} Reproducir${ep}</a>`;
+      }
+      const texto = p.idEpisodio ? `Continuar ${esc(p.etiqueta.split(' · ')[0])}` : 'Continuar';
+      return `<a class="btn btn-claro" href="/ver.html?id=${d.idContenido}${p.idEpisodio ? '&ep=' + p.idEpisodio : ''}">${icono('play')} ${texto}</a>`;
+    }
+
+    function estrellas(valor) {
+      return [1, 2, 3, 4, 5].map(n =>
+        `<button data-v="${n}" class="${valor && n <= valor ? 'on' : ''}" aria-label="${n} estrella${n > 1 ? 's' : ''}">${icono('estrella')}</button>`).join('');
+    }
+
+    function pintar() {
+      const totalEpisodios = d.temporadas.reduce((s, t) => s + t.episodios.length, 0);
+      const p = d.progreso;
+      main.innerHTML = `
+        <section class="detalle-fondo">
+          <img src="${esc(d.posterUrl || '')}" alt="">
+          <div class="detalle-info">
+            <h1>${esc(d.titulo)}</h1>
+            ${d.tituloOriginal !== d.titulo ? `<div class="original">${esc(d.tituloOriginal)}</div>` : ''}
+            <div class="meta">
+              <span>${d.anio}</span>
+              <span class="badge" title="${esc(d.clasificacion.nombre)}">${esc(d.clasificacion.codigo)}</span>
+              <span class="punto">${d.tipo === 'SERIE' ? `${d.temporadas.length} temporada${d.temporadas.length > 1 ? 's' : ''} · ${totalEpisodios} episodios` : duracion(d.duracionMinutos)}</span>
+              ${d.generos.length ? `<span class="punto">${d.generos.map(esc).join(', ')}</span>` : ''}
+              ${d.totalCalificaciones ? `<span class="punto">★ ${d.calificacionPromedio.toFixed(1)}</span>` : ''}
+            </div>
+            ${!d.disponibleParaVer ? '<span class="aviso">Este título no se encuentra disponible en NovaPop por el momento. Mientras tanto, puedes ver su tráiler.</span>' : ''}
+            ${d.disponibleHasta ? `<span class="aviso">⏳ Disponible hasta el ${esc(fecha(d.disponibleHasta))}</span>` : ''}
+            <p class="sinopsis">${esc(d.sinopsis)}</p>
+            ${p && !p.completado && p.porcentaje > 0 ? `<div><div class="barra-progreso"><span style="width:${p.porcentaje}%"></span></div>
+              <small class="muted">${p.etiqueta ? esc(p.etiqueta) + ' · ' : ''}${p.porcentaje}% visto</small></div>` : ''}
+            <div class="hero-acciones">
+              ${botonReproducir()}
+              ${d.urlTrailer && d.disponibleParaVer ? `<button class="btn btn-sutil" id="trailer">${icono('peli')} Tráiler</button>` : ''}
+              <button class="btn btn-sutil" id="miLista">${icono(d.enMiLista ? 'check' : 'mas')} Mi lista</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="detalle-cuerpo">
+          <div class="panel">
+            ${d.tipo === 'SERIE' ? `
+              <h2>Episodios</h2>
+              ${d.temporadas.length > 1 ? `<div class="selector-temporada"><select id="temporada">${d.temporadas.map((t, i) => `<option value="${i}">${esc(t.titulo || 'Temporada ' + t.numero)}</option>`).join('')}</select></div>`
+                : `<p class="muted" style="margin-top:-8px">${esc(d.temporadas[0]?.titulo || '')}</p>`}
+              <div class="episodios" id="episodios"></div>` : ''}
+
+            <h2 style="margin-top:${d.tipo === 'SERIE' ? '36px' : '0'}">Tu calificación</h2>
+            <div class="valoracion">
+              <div class="estrellas" id="estrellas">${estrellas(d.miCalificacion)}</div>
+              <span class="muted">${d.miCalificacion ? 'Toca otra estrella para cambiarla' : 'Toca las estrellas para calificar'}</span>
+            </div>
+            <p class="muted" style="margin-top:10px">
+              ${d.totalCalificaciones ? `<span class="promedio" style="color:var(--text)">${d.calificacionPromedio.toFixed(1)}</span> de 5 · ${d.totalCalificaciones} calificación${d.totalCalificaciones > 1 ? 'es' : ''}` : 'Sé el primero en calificarlo.'}
+            </p>
+          </div>
+
+          <aside class="panel">
+            <h2>Elenco y equipo</h2>
+            <div class="creditos">${d.creditos.map(c => `
+              <div class="credito">${c.fotoUrl ? `<img class="ini" src="${esc(c.fotoUrl)}" alt="" loading="lazy">`
+                : `<span class="ini">${esc(c.nombre.split(' ').map(x => x[0]).slice(0, 2).join(''))}</span>`}
+                <div>${esc(c.nombre)}<small>${esc(c.rol)}${c.personaje ? ' · ' + esc(c.personaje) : ''}</small></div></div>`).join('') || '<p class="muted">Sin créditos registrados.</p>'}
+            </div>
+            <dl class="ficha" style="margin-top:26px">
+              <div><dt>Productoras</dt><dd>${d.productoras.map(esc).join(', ') || '—'}</dd></div>
+              <div><dt>Idioma original</dt><dd>${esc(d.idiomaOriginal)}</dd></div>
+              <div><dt>Audio</dt><dd>${d.audios.map(esc).join(', ') || '—'}</dd></div>
+              <div><dt>Subtítulos</dt><dd>${d.subtitulos.map(esc).join(', ') || 'No disponibles'}</dd></div>
+              <div><dt>Clasificación</dt><dd>${esc(d.clasificacion.codigo)} — ${esc(d.clasificacion.nombre)}</dd></div>
+            </dl>
+          </aside>
+        </section>`;
+
+      document.getElementById('trailer')?.addEventListener('click', () => verTrailer(trailerActual || d.urlTrailer));
+      document.getElementById('miLista').onclick = alternarMiLista;
+      document.querySelectorAll('#estrellas button').forEach(b => b.onclick = () => calificar(Number(b.dataset.v)));
+      if (d.tipo === 'SERIE') {
+        const sel = document.getElementById('temporada');
+        const indice = sel ? Number(sel.value) : 0;
+        pintarEpisodios(indice);
+        sel?.addEventListener('change', () => pintarEpisodios(Number(sel.value)));
+      }
+    }
+
+    let trailerActual = null;
+
+    function pintarEpisodios(indice) {
+      const t = d.temporadas[indice];
+      trailerActual = t?.urlTrailer || null;
+      document.getElementById('episodios').innerHTML = (t?.episodios || []).map(e => `
+        <${e.disponible ? 'a' : 'div'} class="episodio ${e.disponible ? '' : 'no-disponible'}" ${e.disponible ? `href="/ver.html?id=${d.idContenido}&ep=${e.id}"` : ''}>
+          <span class="num">${e.numero}</span>
+          <div class="mini"><img src="${esc(d.posterUrl)}" alt="" loading="lazy">
+            ${e.porcentajeVisto ? `<div class="progreso"><span style="width:${e.porcentajeVisto}%"></span></div>` : ''}</div>
+          <div><h3>${esc(e.titulo)}</h3>${e.completado ? '<span class="visto">✓ Visto</span>' : e.porcentajeVisto ? `<small class="muted">${e.porcentajeVisto}% visto</small>` : ''}</div>
+          <span class="muted duracion">${e.disponible ? e.duracionMinutos + ' min' : 'No disponible'}</span>
+        </${e.disponible ? 'a' : 'div'}>`).join('') || '<p class="muted">Esta temporada aún no tiene episodios.</p>';
+    }
+
+    async function alternarMiLista() {
+      try {
+        await api(`/api/catalogo/mi-lista/${d.idContenido}`, { method: d.enMiLista ? 'DELETE' : 'PUT', perfil: true });
+        d.enMiLista = !d.enMiLista;
+        document.getElementById('miLista').innerHTML = `${icono(d.enMiLista ? 'check' : 'mas')} Mi lista`;
+        toast(d.enMiLista ? 'Agregado a Mi lista' : 'Quitado de Mi lista');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+
+    async function calificar(valor) {
+      try {
+        if (valor === d.miCalificacion) {
+          await api(`/api/catalogo/calificaciones/${d.idContenido}`, { method: 'DELETE', perfil: true });
+          toast('Calificación eliminada');
+        } else {
+          await api(`/api/catalogo/calificaciones/${d.idContenido}`, { method: 'PUT', perfil: true, body: { valoracion: valor } });
+          toast(`Calificaste con ${valor} estrella${valor > 1 ? 's' : ''}`);
+        }
+        await cargar();
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

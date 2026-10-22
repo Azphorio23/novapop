@@ -1,0 +1,59 @@
+{
+  "colecciones": [
+    {
+      "nombre": "Universo Cinematográfico de Marvel",
+      "tipo": "FRANQUICIA",
+      "peliculas": [
+        ["Iron Man", 2008], ["The Incredible Hulk", 2008], ["Iron Man 2", 2010], ["Thor", 2011],
+        ["Captain America: The First Avenger", 2011], ["The Avengers", 2012], ["Iron Man 3", 2013],
+        ["Thor: The Dark World", 2013], ["Captain America: The Winter Soldier", 2014],
+        ["Guardians of the Galaxy", 2014], ["Avengers: Age of Ultron", 2015], ["Ant-Man", 2015],
+        ["Captain America: Civil War", 2016], ["Doctor Strange", 2016], ["Guardians of the Galaxy Vol. 2", 2017],
+        ["Spider-Man: Homecoming", 2017], ["Thor: Ragnarok", 2017], ["Black Panther", 2018],
+        ["Avengers: Infinity War", 2018], ["Ant-Man and the Wasp", 2018], ["Captain Marvel", 2019],
+        ["Avengers: Endgame", 2019], ["Spider-Man: Far From Home", 2019], ["Spider-Man: No Way Home", 2021],
+        ["Deadpool & Wolverine", 2024]
+      ]
+    },
+    {
+      "nombre": "Clásicos de Disney",
+      "tipo": "FILA",
+      "peliculas": [
+        ["Snow White and the Seven Dwarfs", 1937], ["Pinocchio", 1940], ["Dumbo", 1941], ["Bambi", 1942],
+        ["Cinderella", 1950], ["Alice in Wonderland", 1951], ["Peter Pan", 1953], ["Lady and the Tramp", 1955],
+        ["Sleeping Beauty", 1959], ["One Hundred and One Dalmatians", 1961], ["The Jungle Book", 1967],
+        ["The Little Mermaid", 1989], ["Beauty and the Beast", 1991], ["Aladdin", 1992], ["The Lion King", 1994],
+        ["Pocahontas", 1995], ["The Hunchback of Notre Dame", 1996], ["Hercules", 1997], ["Mulan", 1998],
+        ["Tarzan", 1999]
+      ]
+    },
+    {
+      "nombre": "DC: películas animadas",
+      "tipo": "FRANQUICIA",
+      "peliculas": [
+        ["Batman: Mask of the Phantasm", 1993], ["Wonder Woman", 2009], ["Superman/Batman: Public Enemies", 2009],
+        ["Batman: Under the Red Hood", 2010], ["Batman: Year One", 2011], ["Justice League: Doom", 2012],
+        ["Batman: The Dark Knight Returns, Part 1", 2012], ["Batman: The Dark Knight Returns, Part 2", 2013],
+        ["Justice League: The Flashpoint Paradox", 2013], ["Batman: Assault on Arkham", 2014],
+        ["Batman: The Killing Joke", 2016], ["Superman: Red Son", 2020]
+      ]
+    },
+    {
+      "nombre": "El universo de Guillermo del Toro",
+      "tipo": "FRANQUICIA",
+      "peliculas": [
+        ["Guillermo del Toro's Pinocchio", 2022], ["Pan's Labyrinth", 2006], ["The Shape of Water", 2017],
+        ["El espinazo del diablo", 2001], ["Cronos", 1993], ["Mimic", 1997], ["Blade II", 2002],
+        ["Hellboy", 2004], ["Hellboy II: The Golden Army", 2008], ["Pacific Rim", 2013],
+        ["Crimson Peak", 2015], ["Nightmare Alley", 2021]
+      ]
+    },
+    {
+      "nombre": "Series para maratonear",
+      "tipo": "FILA",
+      "series": [
+        ["Breaking Bad", 2008], ["Malcolm in the Middle", 2000], ["The Chosen", 2019]
+      ]
+    }
+  ]
+}

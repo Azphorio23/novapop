@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NovaPop — Películas y series</title>
+  <meta name="description" content="NovaPop: plataforma académica de streaming de películas y series abiertas.">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="landing-top">
+    <a href="/" class="marca"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn-tema" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+      <a class="btn btn-sutil btn-chico" id="btnEntrar" href="/login.html">Iniciar sesión</a>
+    </div>
+  </header>
+
+  <section class="landing-hero">
+    <div class="mosaico" id="mosaico" aria-hidden="true"></div>
+    <h1>Tu cine, recién <em>reventado</em>.</h1>
+    <p>Películas y series animadas, ciencia ficción y aventuras en hasta 4K. Crea perfiles para toda la familia,
+      sigue viendo donde lo dejaste y arma tu propia lista.</p>
+    <div class="landing-acciones">
+      <a class="btn btn-pop" href="/registro.html" id="btnEmpezar">Crear mi cuenta</a>
+      <a class="btn btn-borde" href="#planes">Ver planes</a>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <h2>Todo lo que esperas de un streaming</h2>
+    <div class="ventajas">
+      <div class="ventaja"><div class="ico">🍿</div><h3>Hasta 5 perfiles</h3><p>Cada persona con su lista, su historial y sus recomendaciones. Con PIN si lo necesitas.</p></div>
+      <div class="ventaja"><div class="ico">🧒</div><h3>Perfiles infantiles</h3><p>Solo contenido apto para todo público y +7, sin que tengas que vigilar.</p></div>
+      <div class="ventaja"><div class="ico">📺</div><h3>Calidad adaptable</h3><p>De 240p a 4K Ultra HD según tu plan y tu conexión, con subtítulos en varios idiomas.</p></div>
+      <div class="ventaja"><div class="ico">⏯️</div><h3>Seguir viendo</h3><p>Retoma cualquier película o episodio justo donde lo dejaste, en cualquier dispositivo.</p></div>
+    </div>
+  </section>
+
+  <section class="seccion" id="planes">
+    <h2>Elige tu plan</h2>
+    <p class="muted">Cambia o cancela cuando quieras. Precios mensuales en soles.</p>
+    <div class="planes" id="listaPlanes" style="margin-top:24px"></div>
+  </section>
+
+  <footer class="pie-sitio">
+    <p><b>NovaPop</b> · Proyecto académico sin fines de lucro. · <a href="/admin/" style="color:var(--muted);text-decoration:underline">Administración</a></p>
+    <p>Películas y series abiertas de Blender Foundation / Blender Studio bajo licencia Creative Commons,
+      servidas desde Wikimedia Commons. Los tráileres se muestran desde YouTube. Las marcas pertenecen a sus dueños.</p>
+  </footer>
+
+  <script type="module">
+    import { api, sesion } from '/js/api.js';
+    import { esc, soles } from '/js/ui.js';
+
+    if (sesion.token) {
+      const entrar = document.getElementById('btnEntrar');
+      entrar.textContent = 'Ir a NovaPop';
+      entrar.href = '/perfiles.html';
+      document.getElementById('btnEmpezar').href = '/perfiles.html';
+    }
+
+    api('/api/publico/planes').then(planes => {
+      document.getElementById('listaPlanes').innerHTML = planes.map((p, i) => `
+        <a class="plan" href="/registro.html?plan=${p.id}">
+          ${i === planes.length - 1 ? '<span class="etiqueta">MEJOR CALIDAD</span>' : ''}
+          <h3>${esc(p.nombre)}</h3>
+          <div class="precio">${soles(p.precioMensual)} <small>/ mes</small></div>
+          <ul>
+            <li>Calidad ${esc(p.calidadMaxima)}</li>
+            <li>${p.pantallasSimultaneas} pantalla${p.pantallasSimultaneas > 1 ? 's' : ''} a la vez</li>
+            <li>${p.permiteDescarga ? 'Descargas incluidas' : 'Sin descargas'}</li>
+            <li>Hasta 5 perfiles</li>
+          </ul>
+        </a>`).join('');
+    }).catch(() => {});
+
+    api('/api/publico/posters').then(posters => {
+      const imgs = [...posters, ...posters, ...posters].slice(0, 20);
+      document.getElementById('mosaico').innerHTML = imgs.map(p => `<img src="${esc(p.posterUrl)}" alt="" loading="lazy">`).join('');
+    }).catch(() => {});
+  </script>
+</body>
+</html>

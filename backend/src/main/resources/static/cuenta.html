@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi cuenta · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <main class="pagina-cuenta" id="main"></main>
+  <script type="module">
+    import { api, sesion, exigirSesion } from '/js/api.js';
+    import { esc, navbar, pieDePagina, soles, fecha, modal, toast, cargando, botonTema } from '/js/ui.js';
+
+    const main = document.getElementById('main');
+    const NOMBRES_METODO = { TARJETA_CREDITO: 'Tarjeta de crédito', TARJETA_DEBITO: 'Tarjeta de débito', YAPE: 'Yape', PAYPAL: 'PayPal' };
+    const NOMBRES_DISPOSITIVO = { SMART_TV: '📺 Smart TV', MOVIL: '📱 Celular', TABLET: '📱 Tablet', NAVEGADOR: '💻 Navegador', CONSOLA: '🎮 Consola' };
+
+    if (exigirSesion()) {
+      if (sesion.perfil) navbar(); else document.body.insertAdjacentHTML('afterbegin', botonTema('flotante'));
+      cargando(main);
+      cargar().catch(err => toast(err.message, 'error')).finally(pieDePagina);
+    }
+
+    async function cargar() {
+      const [cuenta, pagos, metodos, dispositivos, planes] = await Promise.all([
+        api('/api/cuenta'), api('/api/cuenta/pagos'), api('/api/cuenta/metodos-pago'),
+        api('/api/cuenta/dispositivos'), api('/api/publico/planes'),
+      ]);
+      const s = cuenta.suscripcion;
+      main.innerHTML = `
+        <h1>Mi cuenta</h1>
+        ${!sesion.perfil ? '<p style="margin-top:-14px;margin-bottom:22px"><a class="btn btn-borde btn-chico" href="/perfiles.html">← Volver a perfiles</a></p>' : ''}
+
+        <section class="bloque">
+          <div class="bloque-cabecera"><h2>Datos de la cuenta</h2></div>
+          <div class="lista-items">
+            <div class="item"><div class="item-texto"><small>Correo</small>${esc(cuenta.correo)}</div></div>
+            <div class="item"><div class="item-texto"><small>País</small>${esc(cuenta.pais.nombre)}</div>
+              <div class="item-texto"><small>Miembro desde</small>${esc(fecha(cuenta.fechaRegistro))}</div>
+              <span class="estado ${esc(cuenta.situacion)}">${esc(cuenta.situacion)}</span></div>
+          </div>
+        </section>
+
+        <section class="bloque">
+          <div class="bloque-cabecera"><h2>Tu plan</h2>
+            <button class="btn btn-pop btn-chico" id="cambiarPlan">Cambiar de plan</button></div>
+          ${s ? `<div class="resumen-plan">
+              <div><div class="nombre-plan">${esc(s.plan.nombre)}</div><span class="muted">${soles(s.plan.precioMensual)} al mes</span></div>
+              <div class="muted">✓ Hasta ${esc(s.plan.calidadMaxima)}<br>✓ ${s.plan.pantallasSimultaneas} pantalla(s) a la vez<br>✓ ${s.plan.permiteDescarga ? 'Con descargas' : 'Sin descargas'}</div>
+              <div class="muted">Desde el ${esc(fecha(s.fechaInicio))}</div>
+            </div>
+            <label class="check" style="margin:18px 0 0"><input type="checkbox" id="renovacion" ${s.renovacionAutomatica ? 'checked' : ''}> Renovación automática cada mes</label>`
+            : '<p class="muted">No tienes una suscripción activa.</p>'}
+        </section>
+
+        <section class="bloque">
+          <div class="bloque-cabecera"><h2>Métodos de pago</h2>
+            <button class="btn btn-borde btn-chico" id="agregarMetodo">+ Agregar</button></div>
+          <div class="lista-items">${metodos.map(m => `
+            <div class="item">
+              <div class="item-texto">${esc(NOMBRES_METODO[m.tipo])}<small>${esc(m.numeroEnmascarado)}</small></div>
+              ${m.predeterminado ? '<span class="estado ACTIVA">Predeterminado</span>'
+                : `<button class="btn btn-borde btn-chico" data-pred="${m.id}">Usar por defecto</button>
+                   <button class="btn btn-peligro btn-chico" data-borrar-metodo="${m.id}">Eliminar</button>`}
+            </div>`).join('') || '<p class="muted">Sin métodos de pago.</p>'}</div>
+        </section>
+
+        <section class="bloque">
+          <div class="bloque-cabecera"><h2>Historial de pagos</h2></div>
+          <div class="tabla-scroll"><table class="tabla">
+            <thead><tr><th>Fecha</th><th>Plan</th><th>Método</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>${pagos.map(p => `<tr><td>${esc(fecha(p.fechaPago))}</td><td>${esc(p.plan)}</td><td>${esc(p.metodo)}</td>
+              <td>${soles(p.monto)}</td><td><span class="estado ${esc(p.situacion)}">${esc(p.situacion)}</span></td></tr>`).join('')}</tbody>
+          </table></div>
+        </section>
+
+        <section class="bloque">
+          <div class="bloque-cabecera"><h2>Dispositivos</h2></div>
+          <div class="lista-items">${dispositivos.map(d => `
+            <div class="item">
+              <div class="item-texto">${esc(NOMBRES_DISPOSITIVO[d.tipo] || d.tipo)} · ${esc(d.nombre)}
+                <small>Última conexión: ${d.ultimaConexion ? esc(new Date(d.ultimaConexion).toLocaleString('es-PE')) : '—'}
+                ${String(d.id) === sesion.dispositivo ? ' · <b style="color:var(--pop)">Este dispositivo</b>' : ''}</small></div>
+              <button class="btn btn-peligro btn-chico" data-borrar-disp="${d.id}">Quitar</button>
+            </div>`).join('') || '<p class="muted">Aún no reprodujiste nada en ningún dispositivo.</p>'}</div>
+        </section>`;
+
+      document.getElementById('renovacion')?.addEventListener('change', async e => {
+        await accion(() => api('/api/cuenta/renovacion', { method: 'PUT', body: { renovacionAutomatica: e.target.checked } }),
+          e.target.checked ? 'Renovación automática activada' : 'Renovación automática desactivada');
+      });
+      document.getElementById('cambiarPlan').onclick = () => elegirPlan(planes, s?.plan.id);
+      document.getElementById('agregarMetodo').onclick = agregarMetodo;
+      main.querySelectorAll('[data-pred]').forEach(b => b.onclick = () =>
+        accion(() => api(`/api/cuenta/metodos-pago/${b.dataset.pred}/predeterminado`, { method: 'PUT' }), 'Método predeterminado actualizado'));
+      main.querySelectorAll('[data-borrar-metodo]').forEach(b => b.onclick = () => confirm('¿Eliminar este método de pago?') &&
+        accion(() => api(`/api/cuenta/metodos-pago/${b.dataset.borrarMetodo}`, { method: 'DELETE' }), 'Método eliminado'));
+      main.querySelectorAll('[data-borrar-disp]').forEach(b => b.onclick = () => {
+        if (!confirm('¿Quitar este dispositivo de tu cuenta?')) return;
+        if (b.dataset.borrarDisp === sesion.dispositivo) sesion.dispositivo = null;
+        accion(() => api(`/api/cuenta/dispositivos/${b.dataset.borrarDisp}`, { method: 'DELETE' }), 'Dispositivo quitado');
+      });
+    }
+
+    async function accion(fn, mensaje) {
+      try {
+        await fn();
+        toast(mensaje);
+        await cargar();
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+
+    function elegirPlan(planes, actual) {
+      const { el, cerrar } = modal(`
+        <h2>Cambiar de plan</h2>
+        <form id="fPlan">
+          <div class="planes" style="grid-template-columns:1fr">${planes.map(p => `
+            <label class="plan"><input type="radio" name="plan" value="${p.id}" ${p.id === actual ? 'checked' : ''}>
+              <h3>${esc(p.nombre)} ${p.id === actual ? '<span class="muted" style="font-size:.8rem">(actual)</span>' : ''}</h3>
+              <div class="precio" style="font-size:1.4rem;margin:4px 0">${soles(p.precioMensual)} <small>/ mes</small></div>
+              <span class="muted">${esc(p.calidadMaxima)} · ${p.pantallasSimultaneas} pantalla(s)</span></label>`).join('')}</div>
+          <p class="muted" style="font-size:.88rem">Se cobrará el nuevo plan a tu método predeterminado (pago simulado).</p>
+          <div class="modal-acciones"><button type="button" class="btn btn-borde" data-cerrar>Cancelar</button>
+            <button class="btn btn-pop">Confirmar</button></div>
+        </form>`);
+      el.querySelector('#fPlan').onsubmit = async e => {
+        e.preventDefault();
+        const idPlan = Number(el.querySelector('input[name=plan]:checked').value);
+        cerrar();
+        await accion(() => api('/api/cuenta/plan', { method: 'PUT', body: { idPlan } }), '¡Plan actualizado!');
+      };
+    }
+
+    function agregarMetodo() {
+      const { el, cerrar } = modal(`
+        <h2>Nuevo método de pago</h2>
+        <form id="fMetodo">
+          <p class="error-form oculto" id="eM"></p>
+          <div class="campo"><label for="tipo">Tipo</label><select id="tipo">
+            ${Object.entries(NOMBRES_METODO).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+          <div class="campo"><label for="numero">Número (tarjeta, celular o cuenta)</label><input id="numero" inputmode="numeric" required></div>
+          <div class="modal-acciones"><button type="button" class="btn btn-borde" data-cerrar>Cancelar</button>
+            <button class="btn btn-pop">Guardar</button></div>
+        </form>`);
+      el.querySelector('#fMetodo').onsubmit = async e => {
+        e.preventDefault();
+        try {
+          await api('/api/cuenta/metodos-pago', { method: 'POST', body: { tipo: el.querySelector('#tipo').value, numero: el.querySelector('#numero').value.replace(/\D/g, '') } });
+          cerrar();
+          toast('Método de pago agregado');
+          cargar();
+        } catch (err) {
+          const eM = el.querySelector('#eM');
+          eM.textContent = err.message;
+          eM.classList.remove('oculto');
+        }
+      };
+    }
+  </script>
+</body>
+</html>

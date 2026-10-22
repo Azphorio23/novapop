@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NovaPop">
+  <defs>
+    <clipPath id="balde">
+      <path d="M13 29 L51 29 L45.5 60 L18.5 60 Z"/>
+    </clipPath>
+    <radialGradient id="grano" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#fffbea"/>
+      <stop offset="0.7" stop-color="#ffe9a3"/>
+      <stop offset="1" stop-color="#ffc83d"/>
+    </radialGradient>
+  </defs>
+  <!-- palomitas -->
+  <g fill="url(#grano)" stroke="#e0a21b" stroke-width="0.8">
+    <circle cx="18" cy="26" r="6"/>
+    <circle cx="46" cy="26" r="6"/>
+    <circle cx="23" cy="18.5" r="7"/>
+    <circle cx="41.5" cy="19" r="7"/>
+    <circle cx="32" cy="14" r="8"/>
+    <circle cx="27.5" cy="25" r="6"/>
+    <circle cx="37" cy="25" r="6"/>
+  </g>
+  <g fill="#ffb703" opacity="0.55">
+    <circle cx="29" cy="12" r="1.6"/>
+    <circle cx="44" cy="17" r="1.3"/>
+    <circle cx="20" cy="17" r="1.3"/>
+  </g>
+  <!-- balde con rayas de cine -->
+  <g clip-path="url(#balde)">
+    <rect x="10" y="29" width="44" height="32" fill="#fff4e0"/>
+    <rect x="13" y="29" width="6.5" height="32" fill="#e63946"/>
+    <rect x="25.5" y="29" width="6.5" height="32" fill="#e63946"/>
+    <rect x="38" y="29" width="6.5" height="32" fill="#e63946"/>
+    <rect x="10" y="29" width="44" height="32" fill="#000" opacity="0.08" transform="translate(30 0)"/>
+  </g>
+  <rect x="11" y="27" width="42" height="5" rx="2.5" fill="#c1121f"/>
+  <!-- estrella "nova" -->
+  <path d="M54 3 L55.6 8.4 L61 10 L55.6 11.6 L54 17 L52.4 11.6 L47 10 L52.4 8.4 Z" fill="#ffc83d"/>
+  <circle cx="9" cy="10" r="1.5" fill="#ffc83d" opacity="0.8"/>
+</svg>

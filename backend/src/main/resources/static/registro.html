@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crear cuenta · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="btn-tema flotante" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+  <main class="pagina-acceso">
+    <form class="tarjeta-acceso ancha" id="form" novalidate>
+      <a href="/" class="marca"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+      <h1>Crea tu cuenta</h1>
+      <p class="sub">Tres pasos y empiezas a ver.</p>
+      <p class="error-form oculto" id="error" role="alert"></p>
+
+      <h3 style="margin-bottom:12px">1. Tus datos</h3>
+      <div class="fila-campos">
+        <div class="campo"><label for="correo">Correo electrónico</label><input id="correo" type="email" autocomplete="email" required></div>
+        <div class="campo"><label for="clave">Contraseña (mín. 8 caracteres)</label><input id="clave" type="password" autocomplete="new-password" minlength="8" required></div>
+      </div>
+      <div class="fila-campos">
+        <div class="campo"><label for="pais">País</label><select id="pais" required></select></div>
+        <div class="campo"><label for="perfil">Nombre de tu primer perfil</label><input id="perfil" maxlength="50" required></div>
+      </div>
+
+      <h3 style="margin:8px 0 12px">2. Elige tu plan</h3>
+      <div class="planes" id="planes"></div>
+
+      <h3 style="margin:8px 0 12px">3. Método de pago <span class="muted" style="font-size:.85rem;font-weight:500">(simulado: no se cobra nada)</span></h3>
+      <div class="fila-campos">
+        <div class="campo"><label for="tipo">Tipo</label>
+          <select id="tipo">
+            <option value="TARJETA_CREDITO">Tarjeta de crédito</option>
+            <option value="TARJETA_DEBITO">Tarjeta de débito</option>
+            <option value="YAPE">Yape</option>
+            <option value="PAYPAL">PayPal</option>
+          </select></div>
+        <div class="campo"><label for="numero" id="numeroLabel">Número de tarjeta</label><input id="numero" inputmode="numeric" placeholder="4111 1111 1111 1111" required></div>
+      </div>
+
+      <button class="btn btn-pop" style="width:100%" id="btn">Crear cuenta y empezar</button>
+      <p class="pie">¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a></p>
+    </form>
+  </main>
+  <script type="module">
+    import { api, sesion } from '/js/api.js';
+    import { esc, soles } from '/js/ui.js';
+
+    const $ = id => document.getElementById(id);
+    const planElegido = new URLSearchParams(location.search).get('plan');
+
+    const [paises, planes] = await Promise.all([api('/api/publico/paises'), api('/api/publico/planes')]);
+    $('pais').innerHTML = paises.map(p => `<option value="${p.id}" ${p.codigo === 'PE' ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('');
+    $('planes').innerHTML = planes.map((p, i) => `
+      <label class="plan">
+        <input type="radio" name="plan" value="${p.id}" ${String(p.id) === planElegido || (!planElegido && i === 1) ? 'checked' : ''}>
+        <h3>${esc(p.nombre)}</h3>
+        <div class="precio">${soles(p.precioMensual)} <small>/ mes</small></div>
+        <ul><li>${esc(p.calidadMaxima)}</li><li>${p.pantallasSimultaneas} pantalla${p.pantallasSimultaneas > 1 ? 's' : ''}</li></ul>
+      </label>`).join('');
+
+    $('tipo').addEventListener('change', () => {
+      const yape = $('tipo').value === 'YAPE';
+      $('numeroLabel').textContent = yape ? 'Número de celular' : $('tipo').value === 'PAYPAL' ? 'Número de cuenta' : 'Número de tarjeta';
+      $('numero').placeholder = yape ? '987 654 321' : '4111 1111 1111 1111';
+    });
+
+    $('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const error = $('error');
+      error.classList.add('oculto');
+      $('btn').disabled = true;
+      try {
+        const r = await api('/api/auth/registro', { method: 'POST', body: {
+          correo: $('correo').value.trim(),
+          clave: $('clave').value,
+          idPais: Number($('pais').value),
+          idPlan: Number(document.querySelector('input[name=plan]:checked')?.value),
+          nombrePerfil: $('perfil').value.trim(),
+          tipoMetodo: $('tipo').value,
+          numeroPago: $('numero').value.replace(/\D/g, ''),
+        } });
+        sesion.iniciar(r);
+        location.href = '/perfiles.html';
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.remove('oculto');
+        scrollTo({ top: 0, behavior: 'smooth' });
+      } finally {
+        $('btn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

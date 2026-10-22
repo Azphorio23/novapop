@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inicio · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <main class="catalogo" id="main"></main>
+  <script type="module">
+    import { api, exigirPerfil } from '/js/api.js';
+    import { esc, icono, navbar, pieDePagina, tarjeta, fila, activarCarruseles, duracion, fecha, cargando, toast, verTrailer } from '/js/ui.js';
+
+    const params = new URLSearchParams(location.search);
+    const tipo = params.get('tipo');
+    const q = params.get('q');
+    const lista = params.has('lista');
+    const main = document.getElementById('main');
+
+    if (exigirPerfil()) {
+      navbar(lista ? 'lista' : tipo === 'PELICULA' ? 'peliculas' : tipo === 'SERIE' ? 'series' : q ? '' : 'inicio');
+      cargando(main);
+      (tipo || q || lista ? explorar() : inicio())
+        .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico">🍿</div><p>${esc(err.message)}</p></div>`; })
+        .finally(pieDePagina);
+    }
+
+    // ------------------------------------------------------------ vitrina principal
+    async function inicio() {
+      const d = await api('/api/catalogo/inicio', { perfil: true });
+      let html = hero(d.destacados);
+      html += '<div class="filas">';
+      if (d.seguirViendo.length) {
+        html += fila('Seguir viendo', d.seguirViendo.map(s =>
+          tarjeta(s.contenido, {
+            porcentaje: s.porcentaje,
+            etiqueta: s.etiquetaEpisodio || `Quedan ${duracion(Math.max(1, Math.round((s.contenido.duracionMinutos || 0) * (100 - s.porcentaje) / 100)))}`,
+            href: `/ver.html?id=${s.contenido.idContenido}${s.idEpisodio ? '&ep=' + s.idEpisodio : ''}`,
+          })).join(''));
+      }
+      if (d.miLista.length) html += fila('Mi lista', d.miLista.map(t => tarjeta(t)).join(''));
+      for (const f of d.filas) {
+        if (f.tipo === 'TOP10') {
+          html += fila(esc(f.nombre), f.contenidos.map((t, i) =>
+            `<div class="top-item"><span class="numero">${i + 1}</span>${tarjeta(t)}</div>`).join(''), { top10: true });
+        } else {
+          html += fila(esc(f.nombre), f.contenidos.map(t => tarjeta(t)).join(''));
+        }
+      }
+      if (d.proximamente.length) {
+        html += fila('Próximamente', d.proximamente.map(p =>
+          `<div class="proximo">${tarjeta(p.contenido, { href: '#' })}<span class="fecha">${esc(fecha(p.disponibleDesde))}</span></div>`).join(''));
+      }
+      html += '</div>';
+      main.innerHTML = html;
+      main.querySelectorAll('.proximo a').forEach(a => a.onclick = e => { e.preventDefault(); toast('Este título llega pronto a tu país'); });
+      main.querySelectorAll('[data-trailer]').forEach(b => b.onclick = () => verTrailer(b.dataset.trailer));
+      activarCarruseles(main);
+      activarHero(d.destacados);
+    }
+
+    function hero(destacados) {
+      if (!destacados.length) return '';
+      return `<section class="hero" aria-roledescription="carrusel">
+        ${destacados.map((t, i) => `
+          <div class="hero-slide ${i === 0 ? 'activo' : ''}">
+            <img src="${esc(t.posterUrl || '')}" alt="">
+            <div class="hero-info">
+              <span class="kicker">${t.tipo === 'SERIE' ? 'Serie' : 'Película'} · Estreno en NovaPop</span>
+              <h1>${esc(t.titulo)}</h1>
+              <div class="meta"><span>${t.anio}</span><span class="badge">${esc(t.clasificacion)}</span>
+                ${t.generoPrincipal ? `<span class="punto">${esc(t.generoPrincipal)}</span>` : ''}
+                ${t.duracionMinutos ? `<span class="punto">${duracion(t.duracionMinutos)}</span>` : ''}</div>
+              <p>${esc(t.sinopsis)}</p>
+              <div class="hero-acciones">
+                ${t.soloTrailer
+                  ? (t.urlTrailer ? `<button class="btn btn-claro" data-trailer="${esc(t.urlTrailer)}">${icono('play')} Ver tráiler</button>` : '')
+                  : `<a class="btn btn-claro" href="/ver.html?id=${t.idContenido}">${icono('play')} Reproducir</a>`}
+                <a class="btn btn-sutil" href="/titulo.html?id=${t.idContenido}">${icono('info')} Más información</a>
+              </div>
+            </div>
+          </div>`).join('')}
+        ${destacados.length > 1 ? `<div class="hero-puntos">${destacados.map((_, i) => `<button aria-label="Destacado ${i + 1}" class="${i === 0 ? 'activo' : ''}"></button>`).join('')}</div>` : ''}
+      </section>`;
+    }
+
+    function activarHero(destacados) {
+      if (destacados.length < 2) return;
+      const slides = [...main.querySelectorAll('.hero-slide')];
+      const puntos = [...main.querySelectorAll('.hero-puntos button')];
+      let actual = 0;
+      const ir = i => {
+        slides[actual].classList.remove('activo'); puntos[actual].classList.remove('activo');
+        actual = i;
+        slides[actual].classList.add('activo'); puntos[actual].classList.add('activo');
+      };
+      let timer = setInterval(() => ir((actual + 1) % slides.length), 8000);
+      puntos.forEach((p, i) => p.onclick = () => { clearInterval(timer); ir(i); timer = setInterval(() => ir((actual + 1) % slides.length), 8000); });
+    }
+
+    // ------------------------------------------------------------ explorar / buscar / mi lista
+    async function explorar() {
+      const titulo = lista ? 'Mi lista' : q ? `Resultados para “${esc(q)}”` : tipo === 'SERIE' ? 'Series' : 'Películas';
+      if (lista) {
+        const items = await api('/api/catalogo/mi-lista', { perfil: true });
+        pintarGrilla(titulo, items, '', 'Aún no agregaste nada. Toca “+ Mi lista” en cualquier título.');
+        return;
+      }
+      const generos = await api('/api/catalogo/generos');
+      let generoActivo = null;
+      const buscar = async () => {
+        const p = new URLSearchParams();
+        if (tipo) p.set('tipo', tipo);
+        if (q) p.set('q', q);
+        if (generoActivo) p.set('genero', generoActivo);
+        const items = await api('/api/catalogo/contenidos?' + p, { perfil: true });
+        const chips = `<div class="chips">
+          <button class="chip ${!generoActivo ? 'activo' : ''}" data-g="">Todos</button>
+          ${generos.map(g => `<button class="chip ${generoActivo === g.id ? 'activo' : ''}" data-g="${g.id}">${esc(g.nombre)}</button>`).join('')}
+        </div>`;
+        pintarGrilla(titulo, items, chips, q ? 'No encontramos títulos con ese nombre.' : 'No hay títulos de este género por ahora.');
+        main.querySelectorAll('.chip').forEach(c => c.onclick = () => { generoActivo = c.dataset.g ? Number(c.dataset.g) : null; buscar(); });
+      };
+      await buscar();
+    }
+
+    function pintarGrilla(titulo, items, extra, textoVacio) {
+      document.title = `${titulo.replace(/<[^>]+>/g, '')} · NovaPop`;
+      main.innerHTML = `<section class="explorar"><h1>${titulo}</h1>${extra}
+        ${items.length ? `<div class="grilla">${items.map(t => tarjeta(t)).join('')}</div>`
+          : `<div class="vacio"><div class="ico">🍿</div><p>${textoVacio}</p></div>`}</section>`;
+    }
+  </script>
+</body>
+</html>

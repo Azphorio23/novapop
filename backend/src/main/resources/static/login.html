@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="btn-tema flotante" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+  <main class="pagina-acceso">
+    <form class="tarjeta-acceso" id="form" novalidate>
+      <a href="/" class="marca"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+      <h1>Iniciar sesión</h1>
+      <p class="sub">Qué bueno verte de nuevo. Las palomitas ya están listas.</p>
+      <p class="error-form oculto" id="error" role="alert"></p>
+      <div class="campo">
+        <label for="correo">Correo electrónico</label>
+        <input id="correo" name="correo" type="email" autocomplete="email" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Contraseña</label>
+        <input id="clave" name="clave" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-pop" style="width:100%" id="btn">Entrar</button>
+      <p class="pie">¿Nuevo en NovaPop? <a href="/registro.html">Crea tu cuenta</a></p>
+      <div class="demo">Cuentas de prueba (clave <b>NovaPop2026!</b>):<br>
+        <b>demo@novapop.pe</b> — Perú, plan Platino (PIN del perfil Ana: 1234)<br>
+        <b>basico@novapop.pe</b> — México, plan Básico</div>
+    </form>
+  </main>
+  <script type="module">
+    import { api, sesion } from '/js/api.js';
+
+    const form = document.getElementById('form');
+    const error = document.getElementById('error');
+    const mostrarError = msg => { error.textContent = msg; error.classList.remove('oculto'); };
+    if (new URLSearchParams(location.search).has('expirada')) mostrarError('Tu sesión expiró. Vuelve a ingresar.');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      try {
+        const r = await api('/api/auth/login', { method: 'POST', body: { correo: form.correo.value, clave: form.clave.value } });
+        sesion.iniciar(r);
+        location.href = '/perfiles.html';
+      } catch (err) {
+        mostrarError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

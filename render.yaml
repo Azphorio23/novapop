@@ -1,0 +1,19 @@
+# Configuración de despliegue en Render (https://render.com) — "New > Blueprint" lee este archivo.
+services:
+  - type: web
+    name: novapop
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/publico/planes
+    envVars:
+      # Credenciales de Supabase (Session pooler): se escriben en el panel de Render, nunca en el código
+      - key: NOVAPOP_DB_URL
+        sync: false
+      - key: NOVAPOP_DB_USER
+        sync: false
+      - key: NOVAPOP_DB_PASSWORD
+        sync: false
+      # Clave para firmar las sesiones: Render la genera sola
+      - key: NOVAPOP_JWT_SECRET
+        generateValue: true
