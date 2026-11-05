@@ -1,0 +1,50 @@
+/* Panel de administración de NovaPop (sobre Bootstrap 5.3) */
+:root {
+  --np-pop: #ffc83d;
+}
+[data-bs-theme="dark"] body { background: #0f0d16; }
+[data-bs-theme="dark"] .bg-body, [data-bs-theme="dark"] .card, [data-bs-theme="dark"] .modal-content { background-color: #17141f !important; }
+[data-bs-theme="dark"] .bg-body-tertiary { background-color: #13101b !important; }
+
+/* Ícono del botón de tema: sol en oscuro, luna en claro */
+[data-theme="dark"] .solo-claro, [data-theme="light"] .solo-oscuro { display: none; }
+
+.admin-login {
+  background:
+    radial-gradient(800px 500px at 10% -10%, rgba(230, 57, 70, .22), transparent 60%),
+    radial-gradient(700px 500px at 110% 110%, rgba(255, 200, 61, .16), transparent 60%);
+}
+
+/* Menú lateral */
+@media (min-width: 992px) {
+  .menu-lateral { width: 270px; min-height: calc(100vh - 57px); position: sticky; top: 57px; align-self: flex-start;
+    max-height: calc(100vh - 57px); overflow-y: auto; }
+}
+.menu-grupo { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--bs-secondary-color); margin: 18px 10px 6px; }
+.menu-grupo:first-child { margin-top: 4px; }
+.menu-lateral .nav-link { color: var(--bs-body-color); border-radius: .5rem; padding: .45rem .7rem; display: flex; align-items: center; gap: .6rem; font-size: .93rem; }
+.menu-lateral .nav-link:hover { background: var(--bs-secondary-bg); }
+.menu-lateral .nav-link.active { background: var(--np-pop); color: #1b1300; font-weight: 600; }
+.menu-lateral .nav-link .badge { margin-left: auto; }
+
+.contenido-admin { min-width: 0; }
+
+/* Cabecera del tablero (hero) */
+.hero-admin {
+  border-radius: 1rem; padding: clamp(1.5rem, 4vw, 2.5rem); color: #fff; position: relative; overflow: hidden;
+  background: linear-gradient(120deg, #1b1325 0%, #3a1430 45%, #c1121f 100%);
+}
+.hero-admin::after { content: "🍿"; position: absolute; right: 4%; bottom: -10%; font-size: clamp(5rem, 14vw, 9rem); opacity: .22; }
+.hero-admin h1 { font-weight: 800; }
+.tarjeta-resumen { transition: transform .15s, box-shadow .15s; text-decoration: none; }
+.tarjeta-resumen:hover { transform: translateY(-3px); box-shadow: 0 .75rem 1.5rem rgba(0, 0, 0, .15); }
+.tarjeta-resumen .icono { width: 44px; height: 44px; border-radius: .75rem; display: grid; place-items: center; font-size: 1.3rem;
+  background: rgba(255, 200, 61, .18); color: #c98f00; }
+[data-bs-theme="dark"] .tarjeta-resumen .icono { color: var(--np-pop); }
+
+/* Tabla */
+.tabla-admin td, .tabla-admin th { vertical-align: middle; white-space: nowrap; }
+.tabla-admin td.texto { white-space: normal; min-width: 160px; max-width: 320px; }
+.miniatura { width: 72px; height: 42px; object-fit: cover; border-radius: .35rem; background: var(--bs-secondary-bg); }
+.fila-inactiva { opacity: .55; }
+.vista-previa { max-height: 140px; border-radius: .5rem; }

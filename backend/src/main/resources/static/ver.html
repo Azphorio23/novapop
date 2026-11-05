@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reproduciendo · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="pagina-ver">
+  <div class="reproductor" id="rep">
+    <video id="video" controls playsinline preload="metadata"></video>
+    <div class="rep-arriba">
+      <a class="btn btn-sutil btn-icono" id="volver" href="/inicio.html" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="titulos"><h1 id="titulo">Cargando…</h1><small id="subtitulo"></small></div>
+      <div class="rep-opciones">
+        <select id="calidad" aria-label="Calidad de video"></select>
+        <select id="subs" aria-label="Subtítulos"></select>
+      </div>
+    </div>
+    <div class="rep-siguiente oculto" id="siguiente"></div>
+    <div class="rep-mensaje" id="mensaje"><div class="caja"><div class="cargando"></div></div></div>
+  </div>
+
+  <script type="module">
+    import { api, sesion, exigirPerfil, ErrorApi } from '/js/api.js';
+    import { esc } from '/js/ui.js';
+
+    const params = new URLSearchParams(location.search);
+    const idContenido = Number(params.get('id'));
+    const idEpisodio = params.get('ep') ? Number(params.get('ep')) : null;
+    const $ = id => document.getElementById(id);
+    const video = $('video');
+    const INTERVALO_PROGRESO = 10_000;
+    let datos = null;
+    let ultimoEnviado = -1;
+    let cerrada = false;
+
+    $('volver').href = `/titulo.html?id=${idContenido}`;
+
+    if (exigirPerfil()) iniciar();
+
+    // ---------------------------------------------------------------- arranque
+    async function dispositivo() {
+      if (sesion.dispositivo) return Number(sesion.dispositivo);
+      const ua = navigator.userAgent;
+      const movil = /Mobi|Android|iPhone/i.test(ua);
+      const navegador = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Navegador';
+      const so = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '';
+      const d = await api('/api/cuenta/dispositivos', { method: 'POST', body: { tipo: movil ? 'MOVIL' : 'NAVEGADOR', nombre: `${navegador}${so ? ' en ' + so : ''}` } });
+      sesion.dispositivo = d.id;
+      return d.id;
+    }
+
+    async function pedirSesion(reintento = false) {
+      try {
+        return await api('/api/reproduccion/iniciar', { method: 'POST', perfil: true,
+          body: { idContenido, idEpisodio, idDispositivo: await dispositivo() } });
+      } catch (err) {
+        // El dispositivo pudo haberse eliminado desde "Mi cuenta": se registra de nuevo una vez
+        if (err instanceof ErrorApi && err.estado === 404 && /Dispositivo/.test(err.message) && !reintento) {
+          sesion.dispositivo = null;
+          return pedirSesion(true);
+        }
+        throw err;
+      }
+    }
+
+    async function iniciar() {
+      try {
+        datos = await pedirSesion();
+      } catch (err) {
+        return mostrarMensaje(err.estado === 409 ? 'Demasiadas pantallas a la vez' : 'No se pudo reproducir', err.message, true);
+      }
+      document.title = `${datos.titulo} · NovaPop`;
+      $('titulo').textContent = datos.titulo;
+      const audio = datos.audios[0];
+      $('subtitulo').textContent = [datos.subtitulo, audio ? `Audio: ${audio.idioma}` : null, `Tu plan: hasta ${datos.calidadMaximaPlan}`]
+        .filter(Boolean).join(' · ');
+
+      prepararCalidades();
+      prepararSubtitulos(audio?.codigo);
+      video.addEventListener('loadedmetadata', () => {
+        if (datos.segundoInicial > 0 && video.currentTime < 1) video.currentTime = datos.segundoInicial;
+      }, { once: true });
+      cargarFuente(Number($('calidad').value));
+      ocultarMensaje();
+      video.play().catch(() => { /* el navegador puede exigir un clic para reproducir con sonido */ });
+      setInterval(() => { if (!video.paused) enviarProgreso(); }, INTERVALO_PROGRESO);
+    }
+
+    // ---------------------------------------------------------------- calidad
+    const altura = resolucion => Number(String(resolucion).split('x')[1]) || 0;
+
+    function prepararCalidades() {
+      const guardada = localStorage.getItem('np_calidad');
+      // Por defecto: la mejor hasta 1080p (el 4K se elige a mano: son archivos muy pesados)
+      let elegida = datos.fuentes.findIndex(f => f.calidad === guardada);
+      if (elegida < 0) elegida = Math.max(0, datos.fuentes.findIndex(f => altura(f.resolucion) <= 1080));
+      $('calidad').innerHTML = datos.fuentes.map((f, i) =>
+        `<option value="${i}" ${i === elegida ? 'selected' : ''}>${esc(f.calidad)}</option>`).join('');
+      $('calidad').onchange = () => {
+        localStorage.setItem('np_calidad', datos.fuentes[Number($('calidad').value)].calidad);
+        const t = video.currentTime;
+        const pausado = video.paused;
+        cargarFuente(Number($('calidad').value));
+        video.addEventListener('loadedmetadata', () => {
+          video.currentTime = t;
+          if (!pausado) video.play();
+        }, { once: true });
+      };
+    }
+
+    function cargarFuente(indice) {
+      video.src = datos.fuentes[indice].url;
+    }
+
+    // ---------------------------------------------------------------- subtítulos
+    function prepararSubtitulos(codigoAudio) {
+      for (const s of datos.subtitulos) {
+        const track = document.createElement('track');
+        Object.assign(track, { kind: 'subtitles', src: s.url, srclang: s.codigo, label: s.idioma });
+        video.append(track);
+      }
+      // Si el audio no está en español, se activan los subtítulos en español cuando existan
+      const porDefecto = codigoAudio && !['es', 'zxx'].includes(codigoAudio) ? datos.subtitulos.findIndex(s => s.codigo === 'es') : -1;
+      $('subs').innerHTML = `<option value="-1">Sin subtítulos</option>` +
+        datos.subtitulos.map((s, i) => `<option value="${i}" ${i === porDefecto ? 'selected' : ''}>${esc(s.idioma)}</option>`).join('');
+      $('subs').classList.toggle('oculto', !datos.subtitulos.length);
+      const aplicar = () => {
+        const elegido = Number($('subs').value);
+        [...video.textTracks].forEach((t, i) => t.mode = i === elegido ? 'showing' : 'disabled');
+      };
+      $('subs').onchange = aplicar;
+      setTimeout(aplicar, 0);
+    }
+
+    // ---------------------------------------------------------------- progreso
+    async function enviarProgreso({ finalizar = false } = {}) {
+      if (!datos || cerrada) return;
+      const segundo = Math.floor(video.currentTime || 0);
+      if (!finalizar && segundo === ultimoEnviado) return;
+      ultimoEnviado = segundo;
+      try {
+        await api(`/api/reproduccion/${datos.idSesion}/${finalizar ? 'finalizar' : 'progreso'}`,
+          { method: finalizar ? 'POST' : 'PUT', perfil: true, body: { segundo }, keepalive: finalizar });
+        if (finalizar) cerrada = true;
+      } catch (err) {
+        if (err.estado === 409) {
+          cerrada = true;
+          video.pause();
+          mostrarMensaje('Reproducción detenida', err.message, true);
+        }
+      }
+    }
+
+    video.addEventListener('pause', () => enviarProgreso());
+    video.addEventListener('seeked', () => enviarProgreso());
+    video.addEventListener('ended', async () => {
+      await enviarProgreso({ finalizar: true });
+      if (datos.siguiente) mostrarSiguiente(true);
+    });
+    video.addEventListener('timeupdate', () => {
+      if (datos?.siguiente && video.duration && video.duration - video.currentTime < 25) mostrarSiguiente(false);
+    });
+    video.addEventListener('error', () => {
+      if (video.error) mostrarMensaje('No se pudo cargar el video', 'Prueba con otra calidad o revisa tu conexión a internet.', false, true);
+    });
+    addEventListener('pagehide', () => enviarProgreso({ finalizar: true }));
+
+    // ---------------------------------------------------------------- siguiente episodio
+    let cuentaRegresiva = null;
+    function mostrarSiguiente(automatico) {
+      const caja = $('siguiente');
+      const url = `/ver.html?id=${idContenido}&ep=${datos.siguiente.idEpisodio}`;
+      if (caja.classList.contains('oculto')) {
+        caja.innerHTML = `<small class="muted">Siguiente episodio</small><strong>${esc(datos.siguiente.etiqueta)}</strong>
+          <a class="btn btn-claro btn-chico" href="${url}" id="irSiguiente">Ver ahora</a>`;
+        caja.classList.remove('oculto');
+        $('irSiguiente').onclick = () => enviarProgreso({ finalizar: true });
+      }
+      if (automatico && !cuentaRegresiva) {
+        let s = 8;
+        cuentaRegresiva = setInterval(() => {
+          $('irSiguiente').textContent = `Ver ahora (${--s})`;
+          if (s <= 0) { clearInterval(cuentaRegresiva); location.href = url; }
+        }, 1000);
+      }
+    }
+
+    // ---------------------------------------------------------------- mensajes y barra superior
+    function mostrarMensaje(titulo, texto, conVolver, conCalidad = false) {
+      $('mensaje').classList.remove('oculto');
+      $('mensaje').innerHTML = `<div class="caja"><h2>${esc(titulo)}</h2><p class="muted">${esc(texto)}</p>
+        <div class="hero-acciones" style="justify-content:center">
+          ${conCalidad ? '<button class="btn btn-pop" id="otraCalidad">Probar otra calidad</button>' : ''}
+          <button class="btn btn-claro" onclick="location.reload()">Reintentar</button>
+          <a class="btn btn-borde" href="/titulo.html?id=${idContenido}">Volver</a>
+        </div></div>`;
+      $('otraCalidad')?.addEventListener('click', () => {
+        const sel = $('calidad');
+        sel.value = String((Number(sel.value) + 1) % datos.fuentes.length);
+        ocultarMensaje();
+        sel.dispatchEvent(new Event('change'));
+      });
+    }
+    function ocultarMensaje() { $('mensaje').classList.add('oculto'); }
+
+    let temporizador;
+    const rep = $('rep');
+    const despertar = () => {
+      rep.classList.remove('inactivo');
+      clearTimeout(temporizador);
+      temporizador = setTimeout(() => { if (!video.paused) rep.classList.add('inactivo'); }, 3000);
+    };
+    ['mousemove', 'touchstart', 'keydown'].forEach(ev => addEventListener(ev, despertar, { passive: true }));
+    video.addEventListener('pause', () => rep.classList.remove('inactivo'));
+  </script>
+</body>
+</html>

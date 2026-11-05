@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>¿Quién está viendo? · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="btn-tema flotante" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+  <main class="pagina-perfiles">
+    <div>
+      <a href="/" class="marca grande"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+      <h1 id="titulo">¿Quién está viendo?</h1>
+      <div class="lista-perfiles" id="lista"></div>
+      <div style="margin-top:44px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-borde" id="btnAdministrar">Administrar perfiles</button>
+        <a class="btn btn-borde" href="/cuenta.html" id="btnCuenta">Mi cuenta</a>
+      </div>
+    </div>
+  </main>
+  <script type="module">
+    import { api, sesion, exigirSesion } from '/js/api.js';
+    import { esc, avatar, icono, modal, pedirPin, toast, AVATARES } from '/js/ui.js';
+
+    if (exigirSesion()) {
+      sesion.olvidarPerfil();
+      let perfiles = [];
+      let idiomas = [];
+      let administrando = false;
+      const lista = document.getElementById('lista');
+
+      async function cargar() {
+        [perfiles, idiomas] = await Promise.all([api('/api/perfiles'), idiomas.length ? idiomas : api('/api/publico/idiomas')]);
+        pintar();
+      }
+
+      function pintar() {
+        document.getElementById('titulo').textContent = administrando ? 'Administrar perfiles' : '¿Quién está viendo?';
+        document.getElementById('btnAdministrar').textContent = administrando ? 'Listo' : 'Administrar perfiles';
+        lista.innerHTML = perfiles.map(p => `
+          <button class="perfil" data-id="${p.id}">
+            ${avatar(p.avatar)}
+            ${administrando ? `<span class="editar">${icono('lapiz')}</span>` : ''}
+            ${p.tienePin && !administrando ? `<span class="candado">${icono('candado')}</span>` : ''}
+            <span>${esc(p.nombre)}</span>
+            ${p.esInfantil ? '<span class="chip-infantil">INFANTIL</span>' : ''}
+          </button>`).join('') +
+          (perfiles.length < 5 ? `<button class="perfil" id="nuevo"><span class="nuevo">+</span><span>Agregar perfil</span></button>` : '');
+
+        lista.querySelectorAll('.perfil[data-id]').forEach(b => b.onclick = () => {
+          const p = perfiles.find(x => x.id === Number(b.dataset.id));
+          administrando ? editar(p) : entrar(p);
+        });
+        document.getElementById('nuevo')?.addEventListener('click', () => editar(null));
+      }
+
+      async function entrar(p) {
+        if (p.tienePin) {
+          const ok = await pedirPin(p.nombre, pin => api(`/api/perfiles/${p.id}/pin`, { method: 'POST', body: { pin } }));
+          if (!ok) return;
+        }
+        sesion.elegirPerfil(p);
+        location.href = '/inicio.html';
+      }
+
+      function editar(p) {
+        const esNuevo = !p;
+        const actual = p || { nombre: '', avatar: AVATARES[(perfiles.length) % AVATARES.length], esInfantil: false, idIdiomaPreferido: idiomas.find(i => i.codigo === 'es')?.id };
+        const { el, cerrar } = modal(`
+          <h2>${esNuevo ? 'Nuevo perfil' : 'Editar perfil'}</h2>
+          <form id="fPerfil" novalidate>
+            <p class="error-form oculto" id="eP"></p>
+            <div class="selector-avatar">${AVATARES.map(a => `<label><input type="radio" name="avatar" value="${a}" ${a === actual.avatar ? 'checked' : ''}>${avatar(a)}</label>`).join('')}</div>
+            <div class="campo"><label for="nombre">Nombre</label><input id="nombre" maxlength="50" value="${esc(actual.nombre)}" required></div>
+            <div class="campo"><label for="idioma">Idioma preferido</label>
+              <select id="idioma">${idiomas.filter(i => i.codigo !== 'zxx').map(i => `<option value="${i.id}" ${i.id === actual.idIdiomaPreferido ? 'selected' : ''}>${esc(i.nombre)}</option>`).join('')}</select></div>
+            <label class="check"><input type="checkbox" id="infantil" ${actual.esInfantil ? 'checked' : ''}> Perfil infantil (solo contenido ATP y +7)</label>
+            <div class="campo"><label for="pin">PIN de control parental (4 dígitos)</label>
+              <input id="pin" inputmode="numeric" maxlength="4" placeholder="${actual.tienePin ? '•••• (deja vacío para mantenerlo)' : 'Opcional'}"></div>
+            ${actual.tienePin ? '<label class="check"><input type="checkbox" id="quitarPin"> Quitar el PIN</label>' : ''}
+            <div class="modal-acciones">
+              ${!esNuevo ? '<button type="button" class="btn btn-peligro" id="borrar" style="margin-right:auto">Eliminar</button>' : ''}
+              <button type="button" class="btn btn-borde" data-cerrar>Cancelar</button>
+              <button class="btn btn-pop">Guardar</button>
+            </div>
+          </form>`);
+        el.querySelector('#nombre').focus();
+        el.querySelector('#fPerfil').onsubmit = async e => {
+          e.preventDefault();
+          const pinNuevo = el.querySelector('#pin').value.trim();
+          const quitar = el.querySelector('#quitarPin')?.checked;
+          const body = {
+            nombre: el.querySelector('#nombre').value.trim(),
+            avatar: el.querySelector('input[name=avatar]:checked').value,
+            esInfantil: el.querySelector('#infantil').checked,
+            idIdiomaPreferido: Number(el.querySelector('#idioma').value),
+            pin: quitar ? '' : (pinNuevo || (esNuevo ? '' : null)),
+          };
+          try {
+            await api(esNuevo ? '/api/perfiles' : `/api/perfiles/${p.id}`, { method: esNuevo ? 'POST' : 'PUT', body });
+            cerrar();
+            toast(esNuevo ? 'Perfil creado' : 'Perfil actualizado');
+            cargar();
+          } catch (err) {
+            const eP = el.querySelector('#eP');
+            eP.textContent = err.message;
+            eP.classList.remove('oculto');
+          }
+        };
+        el.querySelector('#borrar')?.addEventListener('click', async () => {
+          if (!confirm(`¿Eliminar el perfil "${p.nombre}"? Se perderá su lista e historial visibles.`)) return;
+          try {
+            await api(`/api/perfiles/${p.id}`, { method: 'DELETE' });
+            cerrar();
+            toast('Perfil eliminado');
+            cargar();
+          } catch (err) {
+            toast(err.message, 'error');
+          }
+        });
+      }
+
+      document.getElementById('btnAdministrar').onclick = () => { administrando = !administrando; pintar(); };
+      cargar().catch(err => toast(err.message, 'error'));
+    }
+  </script>
+</body>
+</html>
