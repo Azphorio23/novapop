@@ -99,8 +99,6 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0; let
 .tarjeta-acceso .sub { color: var(--muted); margin: 0 0 24px; }
 .tarjeta-acceso .pie { margin-top: 18px; color: var(--muted); font-size: .92rem; text-align: center; }
 .tarjeta-acceso .pie a { color: var(--pop); font-weight: 700; }
-.demo { margin-top: 18px; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(255, 200, 61, .08); border: 1px dashed rgba(255, 200, 61, .4); font-size: .86rem; color: var(--muted); }
-.demo b { color: var(--text); }
 /* Continuar con Google */
 .separador { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: .85rem; }
 .separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--line); }
