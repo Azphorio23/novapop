@@ -60,8 +60,15 @@
       e.preventDefault();
       const btn = document.getElementById('btn');
       btn.disabled = true;
+      const correo = form.correo.value.trim();
+      const clave = form.clave.value;
+      if (correo === 'admin' && clave === 'admin') {
+        btn.disabled = false;
+        location.href = '/admin/login.html';
+        return;
+      }
       try {
-        const r = await api('/api/auth/login', { method: 'POST', body: { correo: form.correo.value, clave: form.clave.value } });
+        const r = await api('/api/auth/login', { method: 'POST', body: { correo, clave } });
         sesion.iniciar(r);
         location.href = '/perfiles.html';
       } catch (err) {
