@@ -18,6 +18,7 @@ StreamingProyecto/
 │   ├── 03_migracion_solo_trailer.sql títulos sin video (solo tráiler)
 │   ├── 04_catalogo_tmdb.sql         catálogo importado con la API key de TMDB
 │   ├── 05_administracion.sql        contraseñas del personal (panel /admin)
+│   ├── 06_catalogo_libre.sql        películas de dominio público y Creative Commons
 │   └── tmdb/                        importador (API key → PERSONA, PRODUCTORA, CONTENIDO)
 └── backend/
     ├── pom.xml
@@ -45,7 +46,8 @@ StreamingProyecto/
 4. Ejecuta también `database/03_migracion_solo_trailer.sql` (permite títulos sin video, solo con tráiler).
 5. Ejecuta `database/04_catalogo_tmdb.sql` (catálogo de Marvel, Disney, DC, series…).
 6. Ejecuta `database/05_administracion.sql` (acceso al panel de administración).
-7. Comprueba que existen las tablas: en **Table Editor** cambia el esquema a `novapop`.
+7. Ejecuta `database/06_catalogo_libre.sql` (clásicos de dominio público y más cortos de Blender, con video completo).
+8. Comprueba que existen las tablas: en **Table Editor** cambia el esquema a `novapop`.
 
 ### Catálogo con derechos de autor (Marvel, Disney, DC, series…)
 

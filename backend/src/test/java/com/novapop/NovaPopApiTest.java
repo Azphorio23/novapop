@@ -49,6 +49,7 @@ class NovaPopApiTest {
         registro.add("NOVAPOP_DB_URL", () -> pg.getJdbcUrl("postgres", "postgres"));
         registro.add("NOVAPOP_DB_USER", () -> "postgres");
         registro.add("NOVAPOP_DB_PASSWORD", () -> "postgres");
+        registro.add("novapop.google.client-id", () -> ""); // ignora el Client ID que pueda haber en .env
     }
 
     @AfterAll
@@ -148,7 +149,7 @@ class NovaPopApiTest {
     void perfilInfantilSoloVeContenidoApto() throws Exception {
         String token = login("demo@novapop.pe");
         JsonNode todo = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos"), token, 3)).andExpect(status().isOk()));
-        assertThat(ids(todo)).containsExactlyInAnyOrder(1L, 2L, 6L, 9L, 10L);
+        assertThat(ids(todo)).containsExactlyInAnyOrder(1L, 2L, 6L, 9L, 10L, 501L, 503L, 504L, 505L);
 
         mvc.perform(conPerfil(get("/api/catalogo/contenidos/7"), token, 3)).andExpect(status().isNotFound());
 
@@ -168,7 +169,7 @@ class NovaPopApiTest {
         JsonNode r = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos").param("q", "lagrimas"), token, 2)));
         assertThat(ids(r)).containsExactly(4L);
         JsonNode terror = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos").param("genero", "8"), token, 2)));
-        assertThat(ids(terror)).containsExactly(7L);
+        assertThat(ids(terror)).containsExactlyInAnyOrder(7L, 500L);
         JsonNode series = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos").param("tipo", "SERIE"), token, 2)));
         assertThat(ids(series)).containsExactly(10L);
     }

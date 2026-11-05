@@ -74,6 +74,7 @@ public final class BaseDatosLocal {
         if (incluirCatalogoTmdb && Files.exists(carpeta.resolve("04_catalogo_tmdb.sql"))) {
             scripts.add("04_catalogo_tmdb.sql");
         }
+        scripts.add("06_catalogo_libre.sql");
         EmbeddedPostgres.Builder builder = EmbeddedPostgres.builder();
         if (puerto > 0) {
             builder.setPort(puerto);
