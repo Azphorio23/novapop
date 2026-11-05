@@ -14,6 +14,9 @@ services:
         sync: false
       - key: NOVAPOP_DB_PASSWORD
         sync: false
+      # Client ID de OAuth de Google (botón "Continuar con Google"); es público, no es una contraseña
+      - key: NOVAPOP_GOOGLE_CLIENT_ID
+        sync: false
       # Clave para firmar las sesiones: Render la genera sola
       - key: NOVAPOP_JWT_SECRET
         generateValue: true

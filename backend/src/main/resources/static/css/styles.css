@@ -101,6 +101,12 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0; let
 .tarjeta-acceso .pie a { color: var(--pop); font-weight: 700; }
 .demo { margin-top: 18px; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(255, 200, 61, .08); border: 1px dashed rgba(255, 200, 61, .4); font-size: .86rem; color: var(--muted); }
 .demo b { color: var(--text); }
+/* Continuar con Google */
+.separador { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: .85rem; }
+.separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.boton-google { display: flex; justify-content: center; min-height: 44px; }
+.google-vinculado { margin: 0 0 14px; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(46, 204, 113, .1); border: 1px solid rgba(46, 204, 113, .4); font-size: .9rem; }
+.google-vinculado a { color: var(--pop); font-weight: 600; }
 
 /* ---------- Planes ---------- */
 .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
@@ -197,7 +203,8 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0; let
 
 /* ---------- Filas del catálogo ---------- */
 main.catalogo { padding-bottom: 60px; }
-.filas { position: relative; z-index: 3; margin-top: -9vh; display: grid; gap: 34px; }
+/* minmax(0, 1fr): sin esto cada fila se estira al ancho de todos sus pósters y desborda la página */
+.filas { position: relative; z-index: 3; margin-top: -9vh; display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px; }
 .filas.sin-hero { margin-top: 0; padding-top: 100px; }
 .fila h2 { font-size: 1.3rem; padding: 0 var(--gutter); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
 .carrusel { position: relative; }

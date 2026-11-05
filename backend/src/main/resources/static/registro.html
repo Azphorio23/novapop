@@ -20,10 +20,16 @@
       <p class="sub">Tres pasos y empiezas a ver.</p>
       <p class="error-form oculto" id="error" role="alert"></p>
 
+      <div class="acceso-google oculto" id="bloqueGoogle">
+        <div class="boton-google" id="botonGoogle"></div>
+        <div class="separador"><span>o regístrate con tu correo</span></div>
+      </div>
+
       <h3 style="margin-bottom:12px">1. Tus datos</h3>
+      <p class="google-vinculado oculto" id="vinculado"></p>
       <div class="fila-campos">
         <div class="campo"><label for="correo">Correo electrónico</label><input id="correo" type="email" autocomplete="email" required></div>
-        <div class="campo"><label for="clave">Contraseña (mín. 8 caracteres)</label><input id="clave" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="campo" id="campoClave"><label for="clave">Contraseña (mín. 8 caracteres)</label><input id="clave" type="password" autocomplete="new-password" minlength="8" required></div>
       </div>
       <div class="fila-campos">
         <div class="campo"><label for="pais">País</label><select id="pais" required></select></div>
@@ -52,6 +58,7 @@
   <script type="module">
     import { api, sesion } from '/js/api.js';
     import { esc, soles } from '/js/ui.js';
+    import { botonGoogle, datosCredencial, pendiente } from '/js/google.js';
 
     const $ = id => document.getElementById(id);
     const planElegido = new URLSearchParams(location.search).get('plan');
@@ -65,6 +72,23 @@
         <div class="precio">${soles(p.precioMensual)} <small>/ mes</small></div>
         <ul><li>${esc(p.calidadMaxima)}</li><li>${p.pantallasSimultaneas} pantalla${p.pantallasSimultaneas > 1 ? 's' : ''}</li></ul>
       </label>`).join('');
+
+    // Registro con Google: el correo queda fijado por Google y no se pide contraseña
+    let credencialGoogle = null;
+    function usarGoogle(credencial) {
+      const { correo, nombre } = datosCredencial(credencial);
+      credencialGoogle = credencial;
+      $('correo').value = correo;
+      $('correo').readOnly = true;
+      $('campoClave').classList.add('oculto');
+      if (!$('perfil').value) $('perfil').value = nombre;
+      $('bloqueGoogle').classList.add('oculto');
+      $('vinculado').innerHTML = `✓ Te registrarás con tu cuenta de Google <b>${esc(correo)}</b> · <a href="/registro.html">usar otro correo</a>`;
+      $('vinculado').classList.remove('oculto');
+    }
+    const credencialPendiente = pendiente.tomar();
+    if (credencialPendiente) usarGoogle(credencialPendiente);
+    else botonGoogle($('botonGoogle'), usarGoogle, 'signup_with');
 
     $('tipo').addEventListener('change', () => {
       const yape = $('tipo').value === 'YAPE';
@@ -80,7 +104,8 @@
       try {
         const r = await api('/api/auth/registro', { method: 'POST', body: {
           correo: $('correo').value.trim(),
-          clave: $('clave').value,
+          clave: credencialGoogle ? null : $('clave').value,
+          credencialGoogle,
           idPais: Number($('pais').value),
           idPlan: Number(document.querySelector('input[name=plan]:checked')?.value),
           nombrePerfil: $('perfil').value.trim(),

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +31,21 @@ public class AuthService {
     private final JwtService jwtService;
     private final CuentaService cuentaService;
     private final PerfilService perfilService;
+    private final GoogleService googleService;
 
-    /** Crea la cuenta con su método de pago, suscripción, primer pago y perfil inicial. */
+    /**
+     * Crea la cuenta con su método de pago, suscripción, primer pago y perfil inicial.
+     * Con credencialGoogle el correo es el verificado por Google y no se pide contraseña.
+     */
     @Transactional
     public TokenResponse registrar(RegistroRequest req) {
-        String correo = req.correo().trim().toLowerCase();
+        boolean conGoogle = req.credencialGoogle() != null && !req.credencialGoogle().isBlank();
+        if (!conGoogle && (req.clave() == null || req.clave().isBlank())) {
+            throw NovaPopException.invalido("clave: es obligatoria");
+        }
+        String correo = conGoogle
+                ? googleService.verificar(req.credencialGoogle()).correo()
+                : req.correo().trim().toLowerCase();
         if (cuentaRepository.existsByCorreoIgnoreCase(correo)) {
             throw NovaPopException.conflicto("Ya existe una cuenta con ese correo");
         }
@@ -47,7 +58,8 @@ public class AuthService {
         Cuenta cuenta = new Cuenta();
         cuenta.setPais(pais);
         cuenta.setCorreo(correo);
-        cuenta.setClaveHash(passwordEncoder.encode(req.clave()));
+        // Las cuentas de Google reciben una clave aleatoria que nadie conoce: solo entran con Google
+        cuenta.setClaveHash(passwordEncoder.encode(conGoogle ? UUID.randomUUID().toString() : req.clave()));
         cuenta.setFechaRegistro(OffsetDateTime.now());
         cuenta.setSituacion(SituacionCuenta.ACTIVA);
         cuenta = cuentaRepository.save(cuenta);
@@ -64,6 +76,19 @@ public class AuthService {
         Cuenta cuenta = cuentaRepository.findPorCorreo(req.correo().trim())
                 .filter(c -> passwordEncoder.matches(req.clave(), c.getClaveHash()))
                 .orElseThrow(() -> NovaPopException.noAutorizado("Correo o contraseña incorrectos"));
+        return emitirToken(cuenta);
+    }
+
+    /** Inicia sesión con Google. Si el correo aún no tiene cuenta responde 404 para que el navegador vaya al registro. */
+    @Transactional(readOnly = true)
+    public TokenResponse loginGoogle(String credencial) {
+        String correo = googleService.verificar(credencial).correo();
+        Cuenta cuenta = cuentaRepository.findPorCorreo(correo)
+                .orElseThrow(() -> NovaPopException.noEncontrado("Aún no tienes una cuenta NovaPop con " + correo));
+        return emitirToken(cuenta);
+    }
+
+    private TokenResponse emitirToken(Cuenta cuenta) {
         if (cuenta.getSituacion() != SituacionCuenta.ACTIVA) {
             throw NovaPopException.prohibido("La cuenta está " + cuenta.getSituacion().name().toLowerCase());
         }

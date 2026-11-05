@@ -20,12 +20,18 @@ public final class AuthDtos {
 
     public record RegistroRequest(
             @NotBlank @Email @Size(max = 150) String correo,
-            @NotBlank @Size(min = 8, max = 72, message = "debe tener entre 8 y 72 caracteres") String clave,
+            // Obligatoria salvo en el registro con Google (credencialGoogle), que no usa contraseña
+            @Size(min = 8, max = 72, message = "debe tener entre 8 y 72 caracteres") String clave,
             @NotNull Long idPais,
             @NotNull Long idPlan,
             @NotBlank @Size(max = 50) String nombrePerfil,
             @NotNull TipoMetodoPago tipoMetodo,
-            @NotBlank @Pattern(regexp = "\\d{6,19}", message = "debe tener entre 6 y 19 dígitos") String numeroPago) {
+            @NotBlank @Pattern(regexp = "\\d{6,19}", message = "debe tener entre 6 y 19 dígitos") String numeroPago,
+            String credencialGoogle) {
+    }
+
+    /** ID token que entrega el botón "Continuar con Google". */
+    public record GoogleRequest(@NotBlank String credencial) {
     }
 
     public record TokenResponse(String token, String correo) {

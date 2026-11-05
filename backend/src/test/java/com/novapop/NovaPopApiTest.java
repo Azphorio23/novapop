@@ -117,6 +117,20 @@ class NovaPopApiTest {
     }
 
     @Test
+    void googleSinConfigurarYRegistroSinClave() throws Exception {
+        // Sin NOVAPOP_GOOGLE_CLIENT_ID el frontend no muestra el botón y el endpoint lo rechaza
+        assertThat(leer(mvc.perform(get("/api/publico/config"))).get("googleClientId").asText()).isEmpty();
+        mvc.perform(post("/api/auth/google").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credencial\":\"token-falso\"}"))
+                .andExpect(status().isBadRequest());
+        // Sin Google la contraseña sigue siendo obligatoria
+        mvc.perform(post("/api/auth/registro").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"correo":"sinclave@correo.com","idPais":1,"idPlan":2,
+                         "nombrePerfil":"Yo","tipoMetodo":"YAPE","numeroPago":"987654321"}"""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void inicioDePerfilAdulto() throws Exception {
         String token = login("demo@novapop.pe");
         JsonNode perfiles = leer(mvc.perform(get("/api/perfiles").header("Authorization", "Bearer " + token)));

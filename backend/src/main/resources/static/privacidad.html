@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .legal h2 { font-size: 1.15rem; margin: 26px 0 8px; }
+    .legal p, .legal li { color: var(--muted); line-height: 1.65; }
+    .legal ul { padding-left: 20px; margin: 0; }
+    .legal b { color: var(--text); }
+  </style>
+</head>
+<body>
+  <button class="btn-tema flotante" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+  <main class="pagina-acceso">
+    <article class="tarjeta-acceso ancha legal">
+      <a href="/" class="marca"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+      <h1>Política de privacidad</h1>
+      <p class="sub">Última actualización: 5 de noviembre de 2026</p>
+
+      <p>NovaPop es un <b>proyecto académico sin fines de lucro</b> que simula una plataforma de streaming.
+        No vende productos ni realiza cobros reales.</p>
+
+      <h2>Qué datos guardamos</h2>
+      <ul>
+        <li><b>Cuenta:</b> correo electrónico, país y una contraseña cifrada (BCrypt). Si te registras con Google no guardamos ninguna contraseña tuya.</li>
+        <li><b>Perfiles:</b> nombres de perfil, avatar, idioma preferido, si es infantil y el PIN de control parental (opcional).</li>
+        <li><b>Actividad:</b> historial de reproducción, progreso, "Mi lista", calificaciones y dispositivos usados.</li>
+        <li><b>Pagos simulados:</b> solo el tipo de método y el número <b>enmascarado</b> (por ejemplo **** 1111); el número completo nunca se almacena.</li>
+        <li><b>Auditoría:</b> fecha y dirección IP desde la que se crea o modifica cada registro.</li>
+      </ul>
+
+      <h2>Inicio de sesión con Google</h2>
+      <p>Si eliges "Continuar con Google", Google nos comparte tu <b>correo electrónico verificado y tu nombre</b>.
+        Usamos el correo para identificar tu cuenta y el nombre solo para sugerir el de tu primer perfil.
+        No accedemos a tus contactos, archivos ni a ningún otro dato de tu cuenta de Google.</p>
+
+      <h2>Para qué los usamos</h2>
+      <p>Únicamente para que la plataforma funcione: iniciar sesión, mostrar el catálogo según tu país y perfil,
+        recordar dónde te quedaste y aplicar las reglas de tu plan. <b>No compartimos ni vendemos tus datos</b>
+        y no usamos publicidad ni rastreadores.</p>
+
+      <h2>Dónde se guardan</h2>
+      <p>En una base de datos PostgreSQL alojada en Supabase. La aplicación se ejecuta en Render.</p>
+
+      <h2>Tus derechos</h2>
+      <p>Puedes pedir que se corrija o elimine tu cuenta y sus datos contactando al equipo del proyecto.
+        Al ser un proyecto académico, los datos pueden borrarse al finalizar el curso.</p>
+
+      <p class="pie"><a href="/">Volver a NovaPop</a></p>
+    </article>
+  </main>
+</body>
+</html>

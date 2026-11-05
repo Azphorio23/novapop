@@ -1,5 +1,6 @@
 package com.novapop.controlador;
 
+import com.novapop.dto.AuthDtos.GoogleRequest;
 import com.novapop.dto.AuthDtos.LoginRequest;
 import com.novapop.dto.AuthDtos.RegistroRequest;
 import com.novapop.dto.AuthDtos.TokenResponse;
@@ -12,6 +13,7 @@ import com.novapop.repositorio.IdiomaRepository;
 import com.novapop.repositorio.PaisRepository;
 import com.novapop.repositorio.PlanSuscripcionRepository;
 import com.novapop.servicio.AuthService;
+import com.novapop.servicio.GoogleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,7 @@ public class AuthController {
     private final IdiomaRepository idiomaRepository;
     private final PlanSuscripcionRepository planRepository;
     private final ContenidoRepository contenidoRepository;
+    private final GoogleService googleService;
 
     @PostMapping("/api/auth/registro")
     @ResponseStatus(HttpStatus.CREATED)
@@ -43,6 +46,20 @@ public class AuthController {
     @PostMapping("/api/auth/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest req) {
         return authService.login(req);
+    }
+
+    @PostMapping("/api/auth/google")
+    public TokenResponse loginGoogle(@Valid @RequestBody GoogleRequest req) {
+        return authService.loginGoogle(req.credencial());
+    }
+
+    public record ConfigDto(String googleClientId) {
+    }
+
+    /** Datos públicos que necesita el frontend; googleClientId vacío oculta el botón de Google. */
+    @GetMapping("/api/publico/config")
+    public ConfigDto config() {
+        return new ConfigDto(googleService.clientId());
     }
 
     @GetMapping("/api/publico/paises")

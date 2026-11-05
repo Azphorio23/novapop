@@ -28,6 +28,10 @@
         <input id="clave" name="clave" type="password" autocomplete="current-password" required>
       </div>
       <button class="btn btn-pop" style="width:100%" id="btn">Entrar</button>
+      <div class="acceso-google oculto" id="bloqueGoogle">
+        <div class="separador"><span>o</span></div>
+        <div class="boton-google" id="botonGoogle"></div>
+      </div>
       <p class="pie">¿Nuevo en NovaPop? <a href="/registro.html">Crea tu cuenta</a></p>
       <div class="demo">Cuentas de prueba (clave <b>NovaPop2026!</b>):<br>
         <b>demo@novapop.pe</b> — Perú, plan Platino (PIN del perfil Ana: 1234)<br>
@@ -36,11 +40,24 @@
   </main>
   <script type="module">
     import { api, sesion } from '/js/api.js';
+    import { botonGoogle, pendiente } from '/js/google.js';
 
     const form = document.getElementById('form');
     const error = document.getElementById('error');
     const mostrarError = msg => { error.textContent = msg; error.classList.remove('oculto'); };
     if (new URLSearchParams(location.search).has('expirada')) mostrarError('Tu sesión expiró. Vuelve a ingresar.');
+
+    // Continuar con Google: si el correo ya tiene cuenta entra; si no, va al registro con el correo listo
+    botonGoogle(document.getElementById('botonGoogle'), async credencial => {
+      try {
+        sesion.iniciar(await api('/api/auth/google', { method: 'POST', body: { credencial } }));
+        location.href = '/perfiles.html';
+      } catch (err) {
+        if (err.estado !== 404) return mostrarError(err.message);
+        pendiente.guardar(credencial);
+        location.href = '/registro.html?google=1';
+      }
+    });
 
     form.addEventListener('submit', async e => {
       e.preventDefault();

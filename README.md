@@ -112,6 +112,18 @@ Ejecuta los dos scripts SQL sobre PostgreSQL 17 embebido, valida que las entidad
 (`ddl-auto=validate`) y recorre la API: login, catálogo por país y edad, búsqueda, Mi lista, calificaciones,
 reproducción, límite de pantallas, calidad por plan, registro, cambio de plan y auditoría.
 
+## Continuar con Google
+
+En el login y en el registro aparece el botón **Continuar con Google** (Google Identity Services):
+
+- Si el correo de Google ya tiene cuenta, entra directo.
+- Si no, abre el registro con el correo ya puesto y sin contraseña (solo se elige país, plan y pago).
+- El backend valida cada token con Google (`GoogleService`): firma, vigencia, que fue emitido para NovaPop y que el correo está verificado.
+
+Para activarlo, crea un **ID de cliente de OAuth** (tipo *Aplicación web*) en [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+agrega como *Orígenes autorizados de JavaScript* `http://localhost:8080`, `http://localhost` y `https://novapop.onrender.com`,
+y pon el ID en la variable `NOVAPOP_GOOGLE_CLIENT_ID` (en `backend/.env` y en Render). Sin esa variable el botón no se muestra.
+
 ## Panel de administración
 
 Disponible en **/admin** (por ejemplo <http://localhost:8080/admin>). Lo usa el personal de la plataforma (tabla `USUARIO`),
