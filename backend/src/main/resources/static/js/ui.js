@@ -28,7 +28,17 @@ const ICONOS = {
   usuario: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   salir: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
   atras: '<path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  reloj: '<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  celular: '<rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  laptop: '<rect x="4.5" y="5" width="15" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 19h19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  consola: '<path d="M7 7h10a5 5 0 0 1 4.8 6.4l-1 3.4a2.4 2.4 0 0 1-4.1.9L15 16H9l-1.7 1.7a2.4 2.4 0 0 1-4.1-.9l-1-3.4A5 5 0 0 1 7 7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 10.5v3M6.5 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15.5" cy="11" r="1.1" fill="currentColor"/><circle cx="17.5" cy="13" r="1.1" fill="currentColor"/>',
 };
+
+// Botón de tema: un sol de rayos redondeados y una luna creciente con una estrella (sin emojis)
+export const SVG_SOL = '<svg class="ico-tema sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.3" fill="currentColor"/>' +
+  '<path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.4 5.4l1.6 1.6M17 17l1.6 1.6M5.4 18.6 7 17M17 7l1.6-1.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>';
+export const SVG_LUNA = '<svg class="ico-tema luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z" fill="currentColor"/>' +
+  '<path d="M16.6 3.2l.55 1.45 1.45.55-1.45.55-.55 1.45-.55-1.45-1.45-.55 1.45-.55z" fill="currentColor"/></svg>';
 export const icono = nombre => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONOS[nombre] || ''}</svg>`;
 
 // ---------------------------------------------------------------- marca
@@ -88,18 +98,21 @@ document.addEventListener('error', e => {
   }
 }, true);
 
-export function imagen(t) {
-  return t.posterUrl
-    ? `<img src="${esc(t.posterUrl)}" alt="" loading="lazy" data-titulo="${esc(t.titulo)}">`
+/** vertical = usa el póster 2:3 si existe (si no, recorta la imagen horizontal). */
+export function imagen(t, vertical = false) {
+  const url = (vertical && t.posterVerticalUrl) || t.posterUrl;
+  return url
+    ? `<img src="${esc(url)}" alt="" loading="lazy" data-titulo="${esc(t.titulo)}">`
     : `<div class="sin-imagen">${esc(t.titulo)}</div>`;
 }
 
-export function tarjeta(t, { porcentaje = null, etiqueta = null, href = null } = {}) {
+export function tarjeta(t, { porcentaje = null, etiqueta = null, href = null, vertical = false } = {}) {
   const destino = href || `/titulo.html?id=${t.idContenido}`;
   const info = [t.anio, t.clasificacion, t.tipo === 'SERIE' ? `${t.totalEpisodios} episodios` : duracion(t.duracionMinutos)]
     .filter(Boolean).map(esc).join(' · ');
-  return `<a class="tarjeta" href="${destino}" title="${esc(t.titulo)}">
-      ${imagen(t)}
+  const clase = vertical ? `tarjeta vertical${t.posterVerticalUrl ? '' : ' sin-vertical'}` : 'tarjeta';
+  return `<a class="${clase}" href="${destino}" title="${esc(t.titulo)}">
+      ${imagen(t, vertical)}
       ${t.tipo === 'SERIE' ? '<span class="chip-serie">SERIE</span>' : ''}
       <div class="capa">
         <span class="titulo">${esc(t.titulo)}</span>
@@ -109,13 +122,13 @@ export function tarjeta(t, { porcentaje = null, etiqueta = null, href = null } =
     </a>`;
 }
 
-/** Fila horizontal con flechas de desplazamiento. */
-export function fila(titulo, contenidoHtml, { top10 = false } = {}) {
+/** Fila horizontal con flechas de desplazamiento. vertical = tarjetas tipo póster. */
+export function fila(titulo, contenidoHtml, { top10 = false, vertical = false } = {}) {
   return `<section class="fila">
       <h2>${titulo}</h2>
       <div class="carrusel">
         <button class="flecha izq" aria-label="Anterior">${icono('izq')}</button>
-        <div class="pista ${top10 ? 'top10' : ''}">${contenidoHtml}</div>
+        <div class="pista${top10 ? ' top10' : ''}${vertical ? ' vertical' : ''}">${contenidoHtml}</div>
         <button class="flecha der" aria-label="Siguiente">${icono('der')}</button>
       </div>
     </section>`;
@@ -130,10 +143,10 @@ export function activarCarruseles(raiz = document) {
 }
 
 // ---------------------------------------------------------------- navegación
-/** Botón ☀️/🌙 (requiere /js/tema.js en el <head>). */
+/** Botón sol/luna (requiere /js/tema.js en el <head>). */
 export const botonTema = (clase = '') =>
   `<button class="btn-tema ${clase}" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema">` +
-  '<span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>';
+  `<span class="solo-oscuro">${SVG_SOL}</span><span class="solo-claro">${SVG_LUNA}</span></button>`;
 
 export function navbar(activo = '') {
   const p = sesion.perfil || {};

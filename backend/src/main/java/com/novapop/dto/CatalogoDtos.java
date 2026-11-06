@@ -15,7 +15,7 @@ public final class CatalogoDtos {
 
     /** Lo que se muestra en cada tarjeta de las filas del catálogo. */
     public record TarjetaDto(Long idContenido, String titulo, String tipo, Short anio, String clasificacion,
-                             String posterUrl, String generoPrincipal, String sinopsis, Integer duracionMinutos,
+                             String posterUrl, String posterVerticalUrl, String generoPrincipal, String sinopsis, Integer duracionMinutos,
                              Integer totalEpisodios, boolean soloTrailer, String urlTrailer) {
     }
 
@@ -56,7 +56,7 @@ public final class CatalogoDtos {
 
     public record DetalleResponse(
             Long idContenido, String titulo, String tituloOriginal, String tipo, Short anio, String sinopsis,
-            String posterUrl, ClasificacionDto clasificacion, String idiomaOriginal, List<String> generos,
+            String posterUrl, String posterVerticalUrl, ClasificacionDto clasificacion, String idiomaOriginal, List<String> generos,
             List<CreditoDto> creditos, List<String> productoras, Integer duracionMinutos, String urlTrailer,
             List<TemporadaDto> temporadas, double calificacionPromedio, long totalCalificaciones,
             Short miCalificacion, boolean enMiLista, ProgresoDto progreso, LocalDate disponibleHasta,

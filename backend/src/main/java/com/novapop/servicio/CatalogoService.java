@@ -266,7 +266,7 @@ public class CatalogoService {
                 .map(s -> s.getIdioma().getNombreIdioma()).distinct().toList();
 
         return new DetalleResponse(c.getIdContenido(), titulo(c), c.getTituloOriginal(), c.getTipoContenido().name(),
-                c.getAnioLanzamiento(), c.getSinopsis(), c.getPosterUrl(),
+                c.getAnioLanzamiento(), c.getSinopsis(), c.getPosterUrl(), c.getPosterVerticalUrl(),
                 new ClasificacionDto(c.getClasificacion().getCodigo(), c.getClasificacion().getNombreClasificacion(),
                         c.getClasificacion().getEdadMinima()),
                 c.getIdiomaOriginal().getNombreIdioma(), generos, creditos, productoras, duracionMinutos, urlTrailer,
@@ -396,7 +396,7 @@ public class CatalogoService {
                 trailer = p != null ? p.getUrlTrailer() : null;
             }
             resultado.put(id, new TarjetaDto(id, titulo(c), c.getTipoContenido().name(), c.getAnioLanzamiento(),
-                    c.getClasificacion().getCodigo(), c.getPosterUrl(), generoPrincipal.get(id), c.getSinopsis(),
+                    c.getClasificacion().getCodigo(), c.getPosterUrl(), c.getPosterVerticalUrl(), generoPrincipal.get(id), c.getSinopsis(),
                     duracion, totalEpisodios, soloTrailer, trailer));
         }
         return resultado;

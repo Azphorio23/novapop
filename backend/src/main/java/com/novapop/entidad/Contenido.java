@@ -42,4 +42,7 @@ public class Contenido extends EntidadAuditable {
 
     @Column(name = "poster_url", length = 500)
     private String posterUrl;
+
+    @Column(name = "poster_vertical_url", length = 500)
+    private String posterVerticalUrl;
 }

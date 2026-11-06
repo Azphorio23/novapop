@@ -477,3 +477,53 @@ img.ini { object-fit: cover; object-position: top; }
 .acciones-error { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 @keyframes parpadeo { 0%, 92%, 100% { opacity: 1; } 94% { opacity: .35; } 96% { opacity: .9; } 97% { opacity: .5; } }
 @media (prefers-reduced-motion: reduce) { .codigo-error { animation: none; } }
+
+/* ---------- Pósters verticales (2:3) ---------- */
+.pista.vertical { grid-auto-columns: clamp(150px, 14vw, 215px); }
+.pista.top10.vertical { grid-auto-columns: clamp(205px, 19vw, 285px); }
+.tarjeta.vertical { aspect-ratio: 2/3; }
+/* El póster ya trae el título dibujado: la capa de texto solo aparece al pasar el mouse */
+.tarjeta.vertical .capa { opacity: 0; transition: opacity .2s; padding: 10px 12px; }
+.tarjeta.vertical:hover .capa, .tarjeta.vertical:focus-visible .capa, .tarjeta.vertical.sin-vertical .capa { opacity: 1; }
+.tarjeta.vertical .titulo { font-size: .95rem; }
+.top-item .tarjeta.vertical .capa { padding-left: 22px; }
+.grilla:has(.tarjeta.vertical) { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+@media (max-width: 760px) {
+  .pista.vertical { grid-auto-columns: 36vw; }
+  .pista.top10.vertical { grid-auto-columns: 48vw; }
+  .grilla:has(.tarjeta.vertical) { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
+
+/* ---------- Controles del carrusel principal: ‹ • • • › ---------- */
+.hero-controles { position: absolute; z-index: 3; right: var(--gutter); bottom: 18%; display: flex; align-items: center; gap: 12px; }
+.hero-controles .hero-puntos { position: static; }
+.hero-flecha {
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); background: rgba(12, 10, 19, .55);
+  color: #f5f2ea; backdrop-filter: blur(6px); display: grid; place-items: center; cursor: pointer; padding: 0;
+  transition: background .2s, border-color .2s, scale .15s;
+}
+.hero-flecha svg { width: 22px; height: 22px; }
+.hero-flecha:hover { background: var(--pop); color: #1b1300; border-color: var(--pop); }
+.hero-flecha:active { scale: .92; }
+@media (max-width: 760px) {
+  /* En celular van arriba a la derecha, sobre la imagen, lejos del texto; también se puede deslizar con el dedo */
+  .hero-controles { bottom: auto; top: 76px; gap: 8px; }
+  .hero-controles .hero-puntos { display: flex; }
+  .hero-flecha { width: 36px; height: 36px; }
+  .hero-flecha svg { width: 18px; height: 18px; }
+}
+
+/* ---------- Íconos dibujados (en lugar de emojis) ---------- */
+.btn-tema svg { width: 20px; height: 20px; display: block; }
+.ico-tema.sol { color: var(--pop); transition: rotate .5s ease; }
+.btn-tema:hover .ico-tema.sol { rotate: 45deg; }
+.ico-tema.luna { color: #6a4fd8; transition: rotate .5s ease; }
+.btn-tema:hover .ico-tema.luna { rotate: -18deg; }
+.ventaja .ico { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; color: var(--pop);
+  background: rgba(255, 200, 61, .12); border: 1px solid rgba(255, 200, 61, .25); }
+.ventaja .ico svg { width: 32px; height: 32px; }
+.vacio .ico img { width: 72px; height: 72px; margin: 0 auto 6px; opacity: .85; filter: drop-shadow(0 8px 18px rgba(230, 57, 70, .35)); }
+.aviso svg { width: 16px; height: 16px; flex: none; }
+.ico-dispositivo { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--pop); flex: none; }
+.ico-dispositivo svg { width: 22px; height: 22px; }
+:root[data-theme="light"] .ventaja .ico { color: #b87a00; background: rgba(255, 183, 3, .14); }

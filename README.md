@@ -19,6 +19,7 @@ StreamingProyecto/
 │   ├── 04_catalogo_tmdb.sql         catálogo importado con la API key de TMDB
 │   ├── 05_administracion.sql        contraseñas del personal (panel /admin)
 │   ├── 06_catalogo_libre.sql        películas de dominio público y Creative Commons
+│   ├── 07_posters_verticales.sql    columna poster_vertical_url (pósters 2:3 de TMDB)
 │   └── tmdb/                        importador (API key → PERSONA, PRODUCTORA, CONTENIDO)
 └── backend/
     ├── pom.xml
@@ -47,7 +48,8 @@ StreamingProyecto/
 5. Ejecuta `database/04_catalogo_tmdb.sql` (catálogo de Marvel, Disney, DC, series…).
 6. Ejecuta `database/05_administracion.sql` (acceso al panel de administración).
 7. Ejecuta `database/06_catalogo_libre.sql` (clásicos de dominio público y más cortos de Blender, con video completo).
-8. Comprueba que existen las tablas: en **Table Editor** cambia el esquema a `novapop`.
+8. Ejecuta `database/07_posters_verticales.sql` (pósters verticales para las tarjetas del catálogo).
+9. Comprueba que existen las tablas: en **Table Editor** cambia el esquema a `novapop`.
 
 ### Catálogo con derechos de autor (Marvel, Disney, DC, series…)
 

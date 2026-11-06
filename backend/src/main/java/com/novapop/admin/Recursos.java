@@ -167,7 +167,8 @@ public final class Recursos {
                 ref("clasificacion", "Clasificación", "clasificaciones", true),
                 oculto(ref("idiomaOriginal", "Idioma original", "idiomas", true)),
                 largo("sinopsis", "Sinopsis"),
-                imagen("posterUrl", "Imagen (URL)"),
+                imagen("posterUrl", "Imagen horizontal (URL)"),
+                imagen("posterVerticalUrl", "Póster vertical (URL)"),
                 // Datos de la tabla PELICULA (subtipo): se guardan junto con el contenido
                 new Campo("duracionMinutos", "Duración (min, películas)", Tipo.ENTERO, false, null, null, null, false,
                         true, false, "Solo para películas"),

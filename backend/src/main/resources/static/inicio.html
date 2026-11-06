@@ -27,7 +27,7 @@
       navbar(lista ? 'lista' : tipo === 'PELICULA' ? 'peliculas' : tipo === 'SERIE' ? 'series' : q ? '' : 'inicio');
       cargando(main);
       (tipo || q || lista ? explorar() : inicio())
-        .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico">🍿</div><p>${esc(err.message)}</p></div>`; })
+        .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico"><img src="/img/logo.svg" alt=""></div><p>${esc(err.message)}</p></div>`; })
         .finally(pieDePagina);
     }
 
@@ -44,18 +44,18 @@
             href: `/ver.html?id=${s.contenido.idContenido}${s.idEpisodio ? '&ep=' + s.idEpisodio : ''}`,
           })).join(''));
       }
-      if (d.miLista.length) html += fila('Mi lista', d.miLista.map(t => tarjeta(t)).join(''));
+      if (d.miLista.length) html += fila('Mi lista', d.miLista.map(t => tarjeta(t, { vertical: true })).join(''), { vertical: true });
       for (const f of d.filas) {
         if (f.tipo === 'TOP10') {
           html += fila(esc(f.nombre), f.contenidos.map((t, i) =>
-            `<div class="top-item"><span class="numero">${i + 1}</span>${tarjeta(t)}</div>`).join(''), { top10: true });
+            `<div class="top-item"><span class="numero">${i + 1}</span>${tarjeta(t, { vertical: true })}</div>`).join(''), { top10: true, vertical: true });
         } else {
-          html += fila(esc(f.nombre), f.contenidos.map(t => tarjeta(t)).join(''));
+          html += fila(esc(f.nombre), f.contenidos.map(t => tarjeta(t, { vertical: true })).join(''), { vertical: true });
         }
       }
       if (d.proximamente.length) {
         html += fila('Próximamente', d.proximamente.map(p =>
-          `<div class="proximo">${tarjeta(p.contenido, { href: '#' })}<span class="fecha">${esc(fecha(p.disponibleDesde))}</span></div>`).join(''));
+          `<div class="proximo">${tarjeta(p.contenido, { href: '#', vertical: true })}<span class="fecha">${esc(fecha(p.disponibleDesde))}</span></div>`).join(''), { vertical: true });
       }
       html += '</div>';
       main.innerHTML = html;
@@ -86,22 +86,48 @@
               </div>
             </div>
           </div>`).join('')}
-        ${destacados.length > 1 ? `<div class="hero-puntos">${destacados.map((_, i) => `<button aria-label="Destacado ${i + 1}" class="${i === 0 ? 'activo' : ''}"></button>`).join('')}</div>` : ''}
+        ${destacados.length > 1 ? `<div class="hero-controles">
+          <button class="hero-flecha izq" aria-label="Destacado anterior">${icono('izq')}</button>
+          <div class="hero-puntos">${destacados.map((_, i) => `<button aria-label="Destacado ${i + 1}" class="${i === 0 ? 'activo' : ''}"></button>`).join('')}</div>
+          <button class="hero-flecha der" aria-label="Destacado siguiente">${icono('der')}</button>
+        </div>` : ''}
       </section>`;
     }
 
     function activarHero(destacados) {
       if (destacados.length < 2) return;
-      const slides = [...main.querySelectorAll('.hero-slide')];
-      const puntos = [...main.querySelectorAll('.hero-puntos button')];
+      const heroEl = main.querySelector('.hero');
+      const slides = [...heroEl.querySelectorAll('.hero-slide')];
+      const puntos = [...heroEl.querySelectorAll('.hero-puntos button')];
+      const total = slides.length;
       let actual = 0;
+      let timer = null;
       const ir = i => {
         slides[actual].classList.remove('activo'); puntos[actual].classList.remove('activo');
-        actual = i;
+        actual = (i + total) % total;
         slides[actual].classList.add('activo'); puntos[actual].classList.add('activo');
       };
-      let timer = setInterval(() => ir((actual + 1) % slides.length), 8000);
-      puntos.forEach((p, i) => p.onclick = () => { clearInterval(timer); ir(i); timer = setInterval(() => ir((actual + 1) % slides.length), 8000); });
+      // Cambia solo cada 8 s; se pausa mientras el mouse está encima y se reinicia al elegir uno a mano
+      const detener = () => clearInterval(timer);
+      const reanudar = () => { detener(); timer = setInterval(() => ir(actual + 1), 8000); };
+      const elegir = i => { ir(i); reanudar(); };
+
+      heroEl.querySelector('.hero-flecha.izq').onclick = () => elegir(actual - 1);
+      heroEl.querySelector('.hero-flecha.der').onclick = () => elegir(actual + 1);
+      puntos.forEach((p, i) => p.onclick = () => elegir(i));
+      heroEl.addEventListener('mouseenter', detener);
+      heroEl.addEventListener('mouseleave', reanudar);
+
+      // En celular: deslizar el dedo a la izquierda o a la derecha
+      let inicioX = null;
+      heroEl.addEventListener('touchstart', e => { inicioX = e.touches[0].clientX; }, { passive: true });
+      heroEl.addEventListener('touchend', e => {
+        if (inicioX === null) return;
+        const dx = e.changedTouches[0].clientX - inicioX;
+        inicioX = null;
+        if (Math.abs(dx) > 45) elegir(actual + (dx < 0 ? 1 : -1));
+      });
+      reanudar();
     }
 
     // ------------------------------------------------------------ explorar / buscar / mi lista
@@ -133,8 +159,8 @@
     function pintarGrilla(titulo, items, extra, textoVacio) {
       document.title = `${titulo.replace(/<[^>]+>/g, '')} · NovaPop`;
       main.innerHTML = `<section class="explorar"><h1>${titulo}</h1>${extra}
-        ${items.length ? `<div class="grilla">${items.map(t => tarjeta(t)).join('')}</div>`
-          : `<div class="vacio"><div class="ico">🍿</div><p>${textoVacio}</p></div>`}</section>`;
+        ${items.length ? `<div class="grilla">${items.map(t => tarjeta(t, { vertical: true })).join('')}</div>`
+          : `<div class="vacio"><div class="ico"><img src="/img/logo.svg" alt=""></div><p>${textoVacio}</p></div>`}</section>`;
     }
   </script>
 </body>
