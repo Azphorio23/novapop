@@ -48,7 +48,7 @@
       for (const f of d.filas) {
         if (f.tipo === 'TOP10') {
           html += fila(esc(f.nombre), f.contenidos.map((t, i) =>
-            `<div class="top-item"><span class="numero">${i + 1}</span>${tarjeta(t, { vertical: true })}</div>`).join(''), { top10: true, vertical: true });
+            `<div class="top-item"><span class="numero${i >= 9 ? ' doble' : ''}">${i + 1}</span>${tarjeta(t, { vertical: true })}</div>`).join(''), { top10: true, vertical: true });
         } else {
           html += fila(esc(f.nombre), f.contenidos.map(t => tarjeta(t, { vertical: true })).join(''), { vertical: true });
         }

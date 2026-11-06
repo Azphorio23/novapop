@@ -27,6 +27,7 @@ const ICONOS = {
   lista: '<path d="M5 3h14v18l-7-4-7 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
   usuario: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   salir: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  abajo: '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   atras: '<path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   reloj: '<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   celular: '<rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -166,14 +167,19 @@ export function navbar(activo = '') {
         </form>
         ${botonTema()}
         <div class="menu-perfil" id="menuPerfil">
-          <button aria-label="Menú de perfil" aria-haspopup="true">${avatar(p.avatar)}</button>
-          <div class="menu-desplegable">
-            <div style="padding:8px 12px;font-weight:700">${esc(p.nombre)}${p.esInfantil ? ' <span class="badge badge-pop">Infantil</span>' : ''}</div>
+          <button class="disparador" aria-label="Menú de perfil" aria-haspopup="true" aria-expanded="false">${avatar(p.avatar)}<span class="flechita">${icono('abajo')}</span></button>
+          <div class="menu-desplegable" role="menu">
+            <div class="menu-cabecera">
+              ${avatar(p.avatar)}
+              <div class="menu-quien">
+                <b>${esc(p.nombre)}${p.esInfantil ? ' <span class="badge badge-pop">Infantil</span>' : ''}</b>
+                <small>${esc(sesion.correo || '')}</small>
+              </div>
+            </div>
+            <a href="/perfiles.html" role="menuitem">${icono('usuario')}<span>Cambiar de perfil</span></a>
+            <a href="/cuenta.html" role="menuitem">${icono('lapiz')}<span>Mi cuenta</span></a>
             <hr>
-            <a href="/perfiles.html">${icono('usuario')} Cambiar de perfil</a>
-            <a href="/cuenta.html">${icono('lapiz')} Mi cuenta</a>
-            <hr>
-            <button id="salir">${icono('salir')} Cerrar sesión</button>
+            <button id="salir" class="salir" role="menuitem">${icono('salir')}<span>Cerrar sesión</span></button>
           </div>
         </div>
       </div>
@@ -187,8 +193,15 @@ export function navbar(activo = '') {
   actualizar();
 
   const menu = $('#menuPerfil');
-  menu.querySelector('button').onclick = e => { e.stopPropagation(); menu.classList.toggle('abierto'); };
-  document.addEventListener('click', () => menu.classList.remove('abierto'));
+  const disparador = menu.querySelector('.disparador');
+  const cerrarMenu = () => { menu.classList.remove('abierto'); disparador.setAttribute('aria-expanded', 'false'); };
+  disparador.onclick = e => {
+    e.stopPropagation();
+    disparador.setAttribute('aria-expanded', String(menu.classList.toggle('abierto')));
+  };
+  menu.querySelector('.menu-desplegable').addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', cerrarMenu);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarMenu(); });
   $('#salir').onclick = () => { sesion.cerrar(); location.href = '/'; };
 }
 
