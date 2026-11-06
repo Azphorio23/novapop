@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Error del servidor · NovaPop</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <script src="/js/tema.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="btn-tema flotante" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro">☀️</span><span class="solo-claro">🌙</span></button>
+  <main class="pagina-acceso pagina-error">
+    <article class="tarjeta-acceso">
+      <a href="/" class="marca"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>
+      <p class="codigo-error" aria-hidden="true">500</p>
+      <h1>Se cortó la transmisión</h1>
+      <p class="sub">Algo falló en nuestros servidores. No es tu culpa: inténtalo de nuevo en unos segundos.</p>
+      <code class="ruta-error" id="ruta"></code>
+      <div class="acciones-error">
+        <button class="btn btn-pop" onclick="location.reload()">Reintentar</button>
+        <a href="/" class="btn btn-borde">Ir al inicio</a>
+      </div>
+    </article>
+  </main>
+  <script>document.getElementById('ruta').textContent = location.pathname + location.search;</script>
+</body>
+</html>

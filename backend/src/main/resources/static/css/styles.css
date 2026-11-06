@@ -459,3 +459,21 @@ img.ini { object-fit: cover; object-position: top; }
 :root[data-theme="light"] .cargando { border-color: rgba(26, 22, 34, .12); border-top-color: var(--pop); }
 :root[data-theme="light"] .error-form { color: #a1121d; }
 :root[data-theme="light"] .aviso { color: #ffd0d4; }
+
+/* ---------- Páginas de error (404, 4xx, 5xx) ---------- */
+.pagina-error { text-align: center; }
+.pagina-error .tarjeta-acceso { width: min(560px, 100%); }
+.codigo-error {
+  font-family: var(--font-display); font-weight: 900; line-height: 1; letter-spacing: -.04em;
+  font-size: clamp(5.5rem, 22vw, 9.5rem); margin: 18px 0 4px;
+  background: linear-gradient(135deg, var(--pop) 10%, var(--red) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: parpadeo 4s infinite;
+}
+.pagina-error h1 { margin-top: 6px; }
+.pagina-error .sub { margin-bottom: 18px; }
+.ruta-error { display: inline-block; max-width: 100%; overflow-wrap: anywhere; font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
+  color: var(--muted); background: var(--bg-2); border: 1px dashed var(--line); border-radius: var(--radius-sm); padding: 6px 12px; margin-bottom: 24px; }
+.acciones-error { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+@keyframes parpadeo { 0%, 92%, 100% { opacity: 1; } 94% { opacity: .35; } 96% { opacity: .9; } 97% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .codigo-error { animation: none; } }
