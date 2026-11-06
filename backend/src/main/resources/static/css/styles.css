@@ -252,7 +252,8 @@ main.catalogo { padding-bottom: 60px; }
 .vacio .ico { font-size: 3rem; }
 
 /* ---------- Detalle de título ---------- */
-.detalle-fondo { position: relative; min-height: 78vh; display: flex; align-items: flex-end; }
+/* Alto mínimo = alto de la imagen (84vw × 9/16 = 47.25vw): en pantallas anchas no se sale por debajo */
+.detalle-fondo { position: relative; min-height: max(78vh, 47.25vw); display: flex; align-items: flex-end; overflow: hidden; }
 /* La imagen conserva su proporción 16:9 (no se estira al alto del texto): arriba a la derecha y fundida con el fondo */
 .detalle-fondo > img {
   position: absolute; top: 0; right: 0; width: min(100%, 84vw); height: auto; aspect-ratio: 16/9; object-fit: cover; object-position: center top;
