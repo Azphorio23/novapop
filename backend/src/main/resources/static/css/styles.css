@@ -253,7 +253,14 @@ main.catalogo { padding-bottom: 60px; }
 
 /* ---------- Detalle de título ---------- */
 .detalle-fondo { position: relative; min-height: 78vh; display: flex; align-items: flex-end; }
-.detalle-fondo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* La imagen conserva su proporción 16:9 (no se estira al alto del texto): arriba a la derecha y fundida con el fondo */
+.detalle-fondo > img {
+  position: absolute; top: 0; right: 0; width: min(100%, 84vw); height: auto; aspect-ratio: 16/9; object-fit: cover; object-position: center top;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28%), linear-gradient(to bottom, #000 62%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0, #000 28%), linear-gradient(to bottom, #000 62%, transparent 100%);
+  mask-composite: intersect;
+}
 .detalle-fondo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 10, 19, .97) 0%, rgba(12, 10, 19, .6) 50%, rgba(12, 10, 19, .2) 100%), linear-gradient(0deg, var(--bg) 0%, rgba(12, 10, 19, 0) 40%); }
 .detalle-info { position: relative; z-index: 1; padding: 120px var(--gutter) 40px; max-width: 760px; display: grid; gap: 16px; }
 .detalle-info h1 { font-size: clamp(2.2rem, 5.5vw, 4rem); }
@@ -489,6 +496,11 @@ img.ini { object-fit: cover; object-position: top; }
 .top-item .tarjeta.vertical .capa { padding-left: 22px; }
 .grilla:has(.tarjeta.vertical) { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
 @media (max-width: 760px) {
+  /* Celular: la imagen completa arriba y el texto empieza donde ella se desvanece */
+  .detalle-fondo { min-height: 0; }
+  .detalle-fondo > img { width: 100%; top: 56px; -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%); mask-image: linear-gradient(to bottom, #000 60%, transparent 100%); }
+  .detalle-fondo::after { background: linear-gradient(0deg, var(--bg) 0%, rgba(12, 10, 19, 0) 60%); }
+  .detalle-info { padding-top: calc(56px + 56.25vw - 44px); }
   .pista.vertical { grid-auto-columns: 36vw; }
   .pista.top10.vertical { grid-auto-columns: 48vw; }
   .grilla:has(.tarjeta.vertical) { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
@@ -527,3 +539,8 @@ img.ini { object-fit: cover; object-position: top; }
 .ico-dispositivo { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--pop); flex: none; }
 .ico-dispositivo svg { width: 22px; height: 22px; }
 :root[data-theme="light"] .ventaja .ico { color: #b87a00; background: rgba(255, 183, 3, .14); }
+/* Tema claro: la ficha del título sigue siendo un panel oscuro, así la imagen se funde con oscuro y no con crema */
+:root[data-theme="light"] .detalle-fondo { background: #0c0a13; }
+@media (max-width: 760px) {
+  :root[data-theme="light"] .detalle-fondo::after { background: linear-gradient(0deg, #0c0a13 0%, rgba(12, 10, 19, 0) 60%); }
+}
