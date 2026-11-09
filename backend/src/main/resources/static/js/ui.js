@@ -47,17 +47,24 @@ export const marca = (clase = '') =>
   `<a href="/inicio.html" class="marca ${clase}" aria-label="NovaPop, inicio"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>`;
 
 // ---------------------------------------------------------------- avatares
-// Personajes de películas con licencia libre (Blender Foundation, CC BY) y de dominio público.
+// Personajes para los avatares de perfil, agrupados como en las plataformas de streaming.
+// Marvel, DC, Disney, Del Toro y series: recortes de los pósters de TMDB (los personajes pertenecen a sus dueños).
+// Cine abierto: películas de Blender Foundation (CC BY) y de dominio público.
 // Las imágenes están en /img/avatares/<clave>.webp; la clave es lo que se guarda en perfil.avatar_url.
 export const PERSONAJES = [
-  { pelicula: 'Big Buck Bunny', personajes: [['bbb-bunny', 'Bunny'], ['bbb-frank', 'Frank'], ['bbb-rinky', 'Rinky']] },
-  { pelicula: 'Sintel', personajes: [['sintel', 'Sintel'], ['sintel-guerrera', 'Sintel guerrera'], ['sintel-scales', 'Scales']] },
-  { pelicula: 'Elephants Dream', personajes: [['ed-proog', 'Proog'], ['ed-emo', 'Emo']] },
-  { pelicula: 'Caminandes', personajes: [['cam-koro', 'Koro']] },
-  { pelicula: 'Sprite Fright', personajes: [['sprite-ellie', 'Exploradora']] },
-  { pelicula: 'Charge', personajes: [['charge-granjero', 'El granjero']] },
-  { pelicula: 'Wing It!', personajes: [['wing-gato', 'El gato piloto']] },
-  { pelicula: 'Viaje a la Luna', personajes: [['luna', 'La Luna']] },
+  { pelicula: 'Marvel', personajes: [['mcu-ironman', 'Iron Man'], ['mcu-capitan', 'Capitán América'], ['mcu-thor', 'Thor'], ['mcu-hulk', 'Hulk'],
+    ['mcu-spiderman', 'Spider-Man'], ['mcu-panther', 'Pantera Negra'], ['mcu-marvel', 'Capitana Marvel'], ['mcu-antman', 'Ant-Man'],
+    ['mcu-starlord', 'Star-Lord'], ['mcu-gamora', 'Gamora'], ['mcu-wolverine', 'Wolverine'], ['mcu-deadpool', 'Deadpool']] },
+  { pelicula: 'DC', personajes: [['dc-batman', 'Batman'], ['dc-superman', 'Superman'], ['dc-wonder', 'Mujer Maravilla'], ['dc-flash', 'Flash'],
+    ['dc-joker', 'Joker'], ['dc-capucha', 'Capucha Roja']] },
+  { pelicula: 'Disney', personajes: [['dis-simba', 'Simba'], ['dis-genio', 'Genio'], ['dis-bella', 'Bella'], ['dis-bestia', 'Bestia'],
+    ['dis-mulan', 'Mulán'], ['dis-cenicienta', 'Cenicienta'], ['dis-alicia', 'Alicia'], ['dis-peterpan', 'Peter Pan'], ['dis-pinocho', 'Pinocho'],
+    ['dis-dumbo', 'Dumbo'], ['dis-bambi', 'Bambi'], ['dis-hercules', 'Hércules'], ['dis-tarzan', 'Tarzán']] },
+  { pelicula: 'Guillermo del Toro', personajes: [['gdt-hellboy', 'Hellboy']] },
+  { pelicula: 'Series', personajes: [['tv-walter', 'Walter White'], ['tv-malcolm', 'Malcolm']] },
+  { pelicula: 'Cine abierto', personajes: [['bbb-bunny', 'Bunny'], ['bbb-frank', 'Frank'], ['bbb-rinky', 'Rinky'], ['sintel', 'Sintel'],
+    ['sintel-guerrera', 'Sintel guerrera'], ['sintel-scales', 'Scales'], ['ed-proog', 'Proog'], ['ed-emo', 'Emo'], ['cam-koro', 'Koro'],
+    ['sprite-ellie', 'Exploradora'], ['charge-granjero', 'El granjero'], ['wing-gato', 'El gato piloto'], ['luna', 'La Luna']] },
 ];
 const NOMBRE_PERSONAJE = Object.fromEntries(PERSONAJES.flatMap(g => g.personajes));
 export const AVATARES = Object.keys(NOMBRE_PERSONAJE);
@@ -213,7 +220,8 @@ export function pieDePagina() {
     <footer class="pie-sitio">
       <p><b>NovaPop</b> · Proyecto académico sin fines de lucro. · <a href="/admin/" style="color:var(--muted);text-decoration:underline">Administración</a></p>
       <p>Películas y series abiertas de Blender Foundation / Blender Studio bajo licencia Creative Commons,
-      servidas desde Wikimedia Commons; los avatares de perfil son personajes de esas películas (CC BY) y de obras de dominio público.
+      servidas desde Wikimedia Commons. Los avatares de perfil usan imágenes de esas películas (CC BY), de obras de dominio público y de pósters de TMDB;
+      los personajes pertenecen a sus dueños.
       Los demás títulos pertenecen a sus estudios: NovaPop solo muestra su ficha
       y su tráiler oficial de YouTube. Las marcas pertenecen a sus dueños.</p>
       <p>Datos e imágenes de catálogo: <a href="https://www.themoviedb.org" target="_blank" rel="noopener" style="color:var(--pop)">TMDB</a>.
