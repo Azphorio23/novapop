@@ -47,28 +47,31 @@ export const marca = (clase = '') =>
   `<a href="/inicio.html" class="marca ${clase}" aria-label="NovaPop, inicio"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>`;
 
 // ---------------------------------------------------------------- avatares
-const COLORES_AVATAR = {
-  'avatar-1': ['#e63946', '#ff8a5b'], 'avatar-2': ['#3a86ff', '#7cc6fe'],
-  'avatar-3': ['#2a9d8f', '#8ce99a'], 'avatar-4': ['#7b2cbf', '#e0aaff'],
-  'avatar-5': ['#ffb703', '#ffe066'], 'avatar-6': ['#f72585', '#ffafcc'],
-  'avatar-7': ['#023e8a', '#48cae4'], 'avatar-8': ['#3d405b', '#f2cc8f'],
+// Personajes de películas con licencia libre (Blender Foundation, CC BY) y de dominio público.
+// Las imágenes están en /img/avatares/<clave>.webp; la clave es lo que se guarda en perfil.avatar_url.
+export const PERSONAJES = [
+  { pelicula: 'Big Buck Bunny', personajes: [['bbb-bunny', 'Bunny'], ['bbb-frank', 'Frank'], ['bbb-rinky', 'Rinky']] },
+  { pelicula: 'Sintel', personajes: [['sintel', 'Sintel'], ['sintel-guerrera', 'Sintel guerrera'], ['sintel-scales', 'Scales']] },
+  { pelicula: 'Elephants Dream', personajes: [['ed-proog', 'Proog'], ['ed-emo', 'Emo']] },
+  { pelicula: 'Caminandes', personajes: [['cam-koro', 'Koro']] },
+  { pelicula: 'Sprite Fright', personajes: [['sprite-ellie', 'Exploradora']] },
+  { pelicula: 'Charge', personajes: [['charge-granjero', 'El granjero']] },
+  { pelicula: 'Wing It!', personajes: [['wing-gato', 'El gato piloto']] },
+  { pelicula: 'Viaje a la Luna', personajes: [['luna', 'La Luna']] },
+];
+const NOMBRE_PERSONAJE = Object.fromEntries(PERSONAJES.flatMap(g => g.personajes));
+export const AVATARES = Object.keys(NOMBRE_PERSONAJE);
+// Perfiles creados antes de los personajes: se muestran con uno equivalente
+const ANTIGUOS = {
+  'avatar-1': 'sintel', 'avatar-2': 'ed-proog', 'avatar-3': 'cam-koro', 'avatar-4': 'bbb-frank',
+  'avatar-5': 'bbb-bunny', 'avatar-6': 'sprite-ellie', 'avatar-7': 'wing-gato', 'avatar-8': 'charge-granjero',
 };
-export const AVATARES = Object.keys(COLORES_AVATAR);
+export const claveAvatar = clave => NOMBRE_PERSONAJE[clave] ? clave : (ANTIGUOS[clave] || 'bbb-bunny');
+export const nombrePersonaje = clave => NOMBRE_PERSONAJE[claveAvatar(clave)];
 
-export function avatar(clave = 'avatar-1') {
-  const [a, b] = COLORES_AVATAR[clave] || COLORES_AVATAR['avatar-1'];
-  const id = 'g' + Math.random().toString(36).slice(2, 8);
-  const n = Number(String(clave).split('-')[1]) || 1;
-  const boca = n % 2 ? '<path d="M38 64 Q50 76 62 64" fill="none" stroke="#1b1300" stroke-width="5" stroke-linecap="round"/>'
-    : '<ellipse cx="50" cy="66" rx="9" ry="7" fill="#1b1300"/>';
-  return `<div class="avatar"><svg viewBox="0 0 100 100" aria-hidden="true">
-    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
-    <rect width="100" height="100" fill="url(#${id})"/>
-    <circle cx="36" cy="44" r="6" fill="#1b1300"/><circle cx="64" cy="44" r="6" fill="#1b1300"/>
-    <circle cx="38" cy="42" r="2" fill="#fff"/><circle cx="66" cy="42" r="2" fill="#fff"/>
-    ${boca}
-    ${n === 5 ? '<path d="M78 10 L81 19 L90 22 L81 25 L78 34 L75 25 L66 22 L75 19Z" fill="#fff" opacity=".9"/>' : ''}
-  </svg></div>`;
+export function avatar(clave) {
+  const k = claveAvatar(clave);
+  return `<div class="avatar"><img src="/img/avatares/${k}.webp" alt="" loading="lazy" draggable="false"></div>`;
 }
 
 // ---------------------------------------------------------------- formato
@@ -210,7 +213,8 @@ export function pieDePagina() {
     <footer class="pie-sitio">
       <p><b>NovaPop</b> · Proyecto académico sin fines de lucro. · <a href="/admin/" style="color:var(--muted);text-decoration:underline">Administración</a></p>
       <p>Películas y series abiertas de Blender Foundation / Blender Studio bajo licencia Creative Commons,
-      servidas desde Wikimedia Commons. Los demás títulos pertenecen a sus estudios: NovaPop solo muestra su ficha
+      servidas desde Wikimedia Commons; los avatares de perfil son personajes de esas películas (CC BY) y de obras de dominio público.
+      Los demás títulos pertenecen a sus estudios: NovaPop solo muestra su ficha
       y su tráiler oficial de YouTube. Las marcas pertenecen a sus dueños.</p>
       <p>Datos e imágenes de catálogo: <a href="https://www.themoviedb.org" target="_blank" rel="noopener" style="color:var(--pop)">TMDB</a>.
       This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
