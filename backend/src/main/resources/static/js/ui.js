@@ -1,5 +1,5 @@
 // Componentes de interfaz compartidos por todas las páginas de NovaPop.
-import { sesion } from './api.js';
+import { api, sesion } from './api.js';
 
 /** Escapa texto antes de insertarlo con innerHTML. */
 export function esc(valor) {
@@ -27,6 +27,7 @@ const ICONOS = {
   lista: '<path d="M5 3h14v18l-7-4-7 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
   usuario: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   salir: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  imagen: '<circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 19.5c1.3-3 3.7-4.5 6.5-4.5s5.2 1.5 6.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>',
   abajo: '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   atras: '<path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   reloj: '<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -75,6 +76,33 @@ const ANTIGUOS = {
 };
 export const claveAvatar = clave => NOMBRE_PERSONAJE[clave] ? clave : (ANTIGUOS[clave] || 'bbb-bunny');
 export const nombrePersonaje = clave => NOMBRE_PERSONAJE[claveAvatar(clave)];
+
+/** Galería de personajes agrupada; el elegido se marca con la clase "activo". */
+export function galeriaPersonajes(actual) {
+  const k = actual ? claveAvatar(actual) : null;
+  return PERSONAJES.map(g => `
+    <section class="galeria-grupo">
+      <h3>${esc(g.pelicula)}</h3>
+      <div class="galeria-fila">${g.personajes.map(([clave, nombre]) => `
+        <button type="button" class="opcion-avatar${clave === k ? ' activo' : ''}" data-avatar="${clave}" title="${esc(nombre)}" aria-label="${esc(nombre)}">${avatar(clave)}<span>${esc(nombre)}</span></button>`).join('')}</div>
+    </section>`).join('');
+}
+
+/** Abre la galería en un modal. Resuelve la clave elegida o null si se cierra. */
+export function elegirPersonaje(actual) {
+  return new Promise(resolve => {
+    let elegido = null;
+    const { el, cerrar } = modal(`
+      <div class="panel-galeria">
+        <div class="galeria-cabecera">
+          <div><h2>Elige tu personaje</h2><small class="muted">Personajes de las películas y series de NovaPop</small></div>
+          <button type="button" class="btn btn-sutil btn-icono" data-cerrar aria-label="Cerrar" style="margin-left:auto">${icono('cerrar')}</button>
+        </div>
+        ${galeriaPersonajes(actual)}
+      </div>`, { clase: 'modal-caja modal-perfil', alCerrar: () => resolve(elegido) });
+    el.querySelectorAll('.opcion-avatar').forEach(b => b.onclick = () => { elegido = b.dataset.avatar; cerrar(); });
+  });
+}
 
 export function avatar(clave) {
   const k = claveAvatar(clave);
@@ -186,6 +214,7 @@ export function navbar(activo = '') {
                 <small>${esc(sesion.correo || '')}</small>
               </div>
             </div>
+            <button id="cambiarPersonaje" role="menuitem">${icono('imagen')}<span>Cambiar personaje</span></button>
             <a href="/perfiles.html" role="menuitem">${icono('usuario')}<span>Cambiar de perfil</span></a>
             <a href="/cuenta.html" role="menuitem">${icono('lapiz')}<span>Mi cuenta</span></a>
             <hr>
@@ -213,6 +242,23 @@ export function navbar(activo = '') {
   document.addEventListener('click', cerrarMenu);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarMenu(); });
   $('#salir').onclick = () => { sesion.cerrar(); location.href = '/'; };
+  $('#cambiarPersonaje').onclick = async () => {
+    cerrarMenu();
+    const actual = sesion.perfil || {};
+    const nuevo = await elegirPersonaje(actual.avatar);
+    if (!nuevo || nuevo === claveAvatar(actual.avatar)) return;
+    try {
+      // El PUT necesita el perfil completo: se reenvían sus datos actuales y pin = null (no lo cambia)
+      const yo = (await api('/api/perfiles')).find(x => x.id === actual.id);
+      await api(`/api/perfiles/${actual.id}`, { method: 'PUT', body: {
+        nombre: yo.nombre, avatar: nuevo, esInfantil: yo.esInfantil, idIdiomaPreferido: yo.idIdiomaPreferido, pin: null } });
+      sesion.elegirPerfil({ ...actual, avatar: nuevo });
+      document.querySelectorAll('.menu-perfil .avatar').forEach(a => a.outerHTML = avatar(nuevo));
+      toast(`Ahora eres ${nombrePersonaje(nuevo)}`);
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
 }
 
 export function pieDePagina() {

@@ -26,7 +26,7 @@
   </main>
   <script type="module">
     import { api, sesion, exigirSesion } from '/js/api.js';
-    import { esc, avatar, icono, modal, pedirPin, toast, AVATARES, PERSONAJES, claveAvatar, nombrePersonaje } from '/js/ui.js';
+    import { esc, avatar, icono, modal, pedirPin, toast, AVATARES, galeriaPersonajes, claveAvatar, nombrePersonaje } from '/js/ui.js';
 
     if (exigirSesion()) {
       sesion.olvidarPerfil();
@@ -106,12 +106,7 @@
               <button type="button" class="btn btn-sutil btn-icono" id="volverForm" aria-label="Volver">${icono('atras')}</button>
               <div><h2>Elige tu personaje</h2><small class="muted">Personajes de las películas y series de NovaPop</small></div>
             </div>
-            ${PERSONAJES.map(g => `
-              <section class="galeria-grupo">
-                <h3>${esc(g.pelicula)}</h3>
-                <div class="galeria-fila">${g.personajes.map(([k, n]) => `
-                  <button type="button" class="opcion-avatar" data-avatar="${k}" title="${esc(n)}" aria-label="${esc(n)}">${avatar(k)}<span>${esc(n)}</span></button>`).join('')}</div>
-              </section>`).join('')}
+            ${galeriaPersonajes(elegido)}
           </div>`, { clase: 'modal-caja modal-perfil' });
         const panelForm = el.querySelector('.panel-form');
         const panelGaleria = el.querySelector('.panel-galeria');
