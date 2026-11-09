@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NovaPop</title>
-  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/img/logo-icono.png" type="image/png">
   <script src="/js/tema.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
       navbar();
       cargando(main);
       cargar().catch(err => {
-        main.innerHTML = `<div class="vacio" style="padding-top:160px"><div class="ico"><img src="/img/logo.svg" alt=""></div><h2>${esc(err.message)}</h2>
+        main.innerHTML = `<div class="vacio" style="padding-top:160px"><div class="ico"><img src="/img/logo.webp" alt=""></div><h2>${esc(err.message)}</h2>
           <p><a class="btn btn-pop" href="/inicio.html" style="margin-top:16px">Volver al inicio</a></p></div>`;
       }).finally(pieDePagina);
     }

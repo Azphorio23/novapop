@@ -44,11 +44,12 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* ---------- Marca ---------- */
-.marca { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-marca); font-weight: 800; font-size: 1.55rem; letter-spacing: -.02em; }
-.marca img { width: 38px; height: 38px; }
+.marca { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-marca); font-weight: 800; font-size: 1.55rem; letter-spacing: -.02em; }
+/* El logo animado trae margen para sus destellos: se dibuja algo más grande y se compensa con margen negativo */
+.marca img { width: 48px; height: 48px; margin: -6px -2px -6px -6px; }
 .marca .pop { color: var(--pop-texto, var(--pop)); }
 .marca.grande { font-size: clamp(2.2rem, 6vw, 3.2rem); }
-.marca.grande img { width: 64px; height: 64px; }
+.marca.grande img { width: 84px; height: 84px; margin: -10px -4px -10px -10px; }
 
 /* ---------- Botones ---------- */
 .btn {
@@ -158,7 +159,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.
 }
 .nav.solida { background: rgba(12, 10, 19, .97); box-shadow: 0 1px 0 var(--line); }
 .nav .marca { font-size: 1.35rem; }
-.nav .marca img { width: 32px; height: 32px; }
+.nav .marca img { width: 42px; height: 42px; margin: -5px -2px -5px -5px; }
 .nav-links { display: flex; gap: 20px; font-weight: 600; font-size: .95rem; }
 .nav-links a { color: var(--muted); transition: color .15s; }
 .nav-links a:hover, .nav-links a.activo { color: var(--text); }

@@ -45,7 +45,7 @@ export const icono = nombre => `<svg viewBox="0 0 24 24" aria-hidden="true">${IC
 
 // ---------------------------------------------------------------- marca
 export const marca = (clase = '') =>
-  `<a href="/inicio.html" class="marca ${clase}" aria-label="NovaPop, inicio"><img src="/img/logo.svg" alt=""><span>Nova<span class="pop">Pop</span></span></a>`;
+  `<a href="/inicio.html" class="marca ${clase}" aria-label="NovaPop, inicio"><img src="/img/logo.webp" alt=""><span>Nova<span class="pop">Pop</span></span></a>`;
 
 // ---------------------------------------------------------------- avatares
 // Personajes para los avatares de perfil, agrupados como en las plataformas de streaming.

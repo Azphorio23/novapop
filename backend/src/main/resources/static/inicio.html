@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inicio · NovaPop</title>
-  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/img/logo-icono.png" type="image/png">
   <script src="/js/tema.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
       navbar(lista ? 'lista' : tipo === 'PELICULA' ? 'peliculas' : tipo === 'SERIE' ? 'series' : q ? '' : 'inicio');
       cargando(main);
       (tipo || q || lista ? explorar() : inicio())
-        .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico"><img src="/img/logo.svg" alt=""></div><p>${esc(err.message)}</p></div>`; })
+        .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico"><img src="/img/logo.webp" alt=""></div><p>${esc(err.message)}</p></div>`; })
         .finally(pieDePagina);
     }
 
@@ -160,7 +160,7 @@
       document.title = `${titulo.replace(/<[^>]+>/g, '')} · NovaPop`;
       main.innerHTML = `<section class="explorar"><h1>${titulo}</h1>${extra}
         ${items.length ? `<div class="grilla">${items.map(t => tarjeta(t, { vertical: true })).join('')}</div>`
-          : `<div class="vacio"><div class="ico"><img src="/img/logo.svg" alt=""></div><p>${textoVacio}</p></div>`}</section>`;
+          : `<div class="vacio"><div class="ico"><img src="/img/logo.webp" alt=""></div><p>${textoVacio}</p></div>`}</section>`;
     }
   </script>
 </body>
