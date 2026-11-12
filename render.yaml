@@ -17,6 +17,9 @@ services:
       # Client ID de OAuth de Google (botón "Continuar con Google"); es público, no es una contraseña
       - key: NOVAPOP_GOOGLE_CLIENT_ID
         sync: false
+      # Clave de TMDB (filmografía de actores y directores); opcional
+      - key: NOVAPOP_TMDB_KEY
+        sync: false
       # Clave para firmar las sesiones: Render la genera sola
       - key: NOVAPOP_JWT_SECRET
         generateValue: true

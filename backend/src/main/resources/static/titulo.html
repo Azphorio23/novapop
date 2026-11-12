@@ -15,7 +15,7 @@
   <main id="main"></main>
   <script type="module">
     import { api, exigirPerfil } from '/js/api.js';
-    import { esc, icono, navbar, pieDePagina, duracion, fecha, verTrailer, toast, cargando } from '/js/ui.js';
+    import { esc, icono, navbar, pieDePagina, duracion, fecha, verTrailer, verPersona, iniciales, toast, cargando } from '/js/ui.js';
 
     const id = Number(new URLSearchParams(location.search).get('id'));
     const main = document.getElementById('main');
@@ -104,9 +104,9 @@
           <aside class="panel">
             <h2>Elenco y equipo</h2>
             <div class="creditos">${d.creditos.map(c => `
-              <div class="credito">${c.fotoUrl ? `<img class="ini" src="${esc(c.fotoUrl)}" alt="" loading="lazy">`
-                : `<span class="ini">${esc(c.nombre.split(' ').map(x => x[0]).slice(0, 2).join(''))}</span>`}
-                <div>${esc(c.nombre)}<small>${esc(c.rol)}${c.personaje ? ' · ' + esc(c.personaje) : ''}</small></div></div>`).join('') || '<p class="muted">Sin créditos registrados.</p>'}
+              <button class="credito" data-persona="${c.idPersona}" title="Ver la filmografía de ${esc(c.nombre)}">${c.fotoUrl ? `<img class="ini" src="${esc(c.fotoUrl)}" alt="" loading="lazy">`
+                : `<span class="ini">${esc(iniciales(c.nombre))}</span>`}
+                <div>${esc(c.nombre)}<small>${esc(c.rol)}${c.personaje ? ' · ' + esc(c.personaje) : ''}</small></div>${icono('der')}</button>`).join('') || '<p class="muted">Sin créditos registrados.</p>'}
             </div>
             <dl class="ficha" style="margin-top:26px">
               <div><dt>Productoras</dt><dd>${d.productoras.map(esc).join(', ') || '—'}</dd></div>
@@ -119,6 +119,7 @@
         </section>`;
 
       document.getElementById('trailer')?.addEventListener('click', () => verTrailer(trailerActual || d.urlTrailer));
+      main.querySelectorAll('.credito[data-persona]').forEach(b => b.onclick = () => verPersona(b.dataset.persona));
       document.getElementById('miLista').onclick = alternarMiLista;
       document.querySelectorAll('#estrellas button').forEach(b => b.onclick = () => calificar(Number(b.dataset.v)));
       if (d.tipo === 'SERIE') {

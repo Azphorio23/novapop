@@ -7,9 +7,12 @@ import com.novapop.dto.CatalogoDtos.EpisodioDto;
 import com.novapop.dto.CatalogoDtos.FilaDto;
 import com.novapop.dto.CatalogoDtos.GeneroDto;
 import com.novapop.dto.CatalogoDtos.InicioResponse;
+import com.novapop.dto.CatalogoDtos.PersonaResponse;
 import com.novapop.dto.CatalogoDtos.ProgresoDto;
 import com.novapop.dto.CatalogoDtos.ProximamenteDto;
 import com.novapop.dto.CatalogoDtos.SeguirViendoDto;
+import com.novapop.dto.CatalogoDtos.TrabajoExternoDto;
+import com.novapop.dto.CatalogoDtos.TrabajoNovaPopDto;
 import com.novapop.dto.CatalogoDtos.TarjetaDto;
 import com.novapop.dto.CatalogoDtos.TemporadaDto;
 import com.novapop.entidad.CalificacionContenidoId;
@@ -57,6 +60,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import com.novapop.entidad.Persona;
+import com.novapop.entidad.ContenidoPersona;
+import com.novapop.repositorio.PersonaRepository;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -91,6 +97,8 @@ public class CatalogoService {
     private final CalificacionContenidoRepository calificacionRepository;
     private final PistaAudioRepository pistaAudioRepository;
     private final SubtituloRepository subtituloRepository;
+    private final PersonaRepository personaRepository;
+    private final TmdbService tmdbService;
 
     /** Perfil validado + datos que filtran el catálogo. */
     public record Contexto(Perfil perfil, Long idCuenta, Long idPais, short edadMaxima) {
@@ -214,7 +222,7 @@ public class CatalogoService {
         List<String> generos = contenidoGeneroRepository.findActivosPorContenidos(List.of(idContenido)).stream()
                 .map(cg -> cg.getGenero().getNombreGenero()).toList();
         List<CreditoDto> creditos = contenidoPersonaRepository.findCreditos(idContenido).stream()
-                .map(cp -> new CreditoDto(cp.getPersona().getNombres() + " " + cp.getPersona().getApellidos(),
+                .map(cp -> new CreditoDto(cp.getPersona().getIdPersona(), nombreCompleto(cp.getPersona()),
                         cp.getRolProduccion().getNombreRolProduccion(), cp.getNombrePersonaje(),
                         cp.getPersona().getFotoUrl()))
                 .toList();
@@ -347,6 +355,75 @@ public class CatalogoService {
                 .toList();
     }
 
+    // ------------------------------------------------------------------ actores y directores
+
+    /**
+     * Completa la ficha de {@link #personaEnNovaPop} con el resto de la filmografía (TMDB). No es transaccional a
+     * propósito: el controlador la llama después, para que la consulta a TMDB no retenga una conexión a la base.
+     */
+    public PersonaResponse conFilmografia(FichaPersona ficha) {
+        PersonaResponse base = ficha.persona();
+        Set<Long> yaListados = base.enNovaPop().stream().map(t -> t.contenido().idContenido()).collect(Collectors.toSet());
+        List<TrabajoNovaPopDto> enNovaPop = new ArrayList<>(base.enNovaPop());
+        List<TrabajoExternoDto> otros = new ArrayList<>();
+        for (TmdbService.Trabajo t : tmdbService.filmografia(base.nombre())) {
+            TarjetaDto enCatalogo = buscarEnCatalogo(ficha.catalogo(), t);
+            if (enCatalogo == null) {
+                otros.add(new TrabajoExternoDto(t.titulo(), t.anio(), t.tipo(), t.posterUrl(), t.rol()));
+            } else if (yaListados.add(enCatalogo.idContenido())) {
+                // Está en NovaPop aunque nuestra base no lo tenga en sus créditos (solo guardamos el elenco principal)
+                enNovaPop.add(new TrabajoNovaPopDto(enCatalogo, null, t.rol()));
+            }
+        }
+        return new PersonaResponse(base.id(), base.nombre(), base.fotoUrl(), base.fechaNacimiento(), base.pais(),
+                enNovaPop, otros, tmdbService.configurado());
+    }
+
+    /** Ficha con sus títulos en NovaPop + el catálogo visible, indexado por título normalizado. */
+    public record FichaPersona(PersonaResponse persona, Map<String, List<TarjetaDto>> catalogo) {
+    }
+
+    /** Ficha de una persona con sus títulos visibles para este perfil (solo datos de NovaPop). */
+    @Transactional(readOnly = true)
+    public FichaPersona personaEnNovaPop(Long idCuenta, Long idPerfil, Long idPersona) {
+        Contexto ctx = contexto(idCuenta, idPerfil);
+        Persona p = personaRepository.findById(idPersona).filter(Persona::estaActivo)
+                .orElseThrow(() -> NovaPopException.noEncontrado("No encontramos a esta persona"));
+        List<Contenido> disponibles = disponibles(ctx);
+        Map<Long, TarjetaDto> tarjetas = tarjetas(disponibles);
+        Map<String, List<TarjetaDto>> catalogo = new HashMap<>();
+        for (Contenido c : disponibles) {
+            for (String titulo : new String[] {c.getTituloOriginal(), c.getTituloLocalizado()}) {
+                if (titulo != null) {
+                    catalogo.computeIfAbsent(normalizar(titulo), k -> new ArrayList<>()).add(tarjetas.get(c.getIdContenido()));
+                }
+            }
+        }
+        Map<Long, TrabajoNovaPopDto> trabajos = new LinkedHashMap<>();
+        for (ContenidoPersona cp : contenidoPersonaRepository.findPorPersona(idPersona)) {
+            TarjetaDto tarjeta = tarjetas.get(cp.getContenido().getIdContenido());
+            if (tarjeta != null) { // solo lo que este perfil puede ver; un título aparece una vez
+                trabajos.putIfAbsent(tarjeta.idContenido(), new TrabajoNovaPopDto(tarjeta,
+                        cp.getRolProduccion().getNombreRolProduccion(), cp.getNombrePersonaje()));
+            }
+        }
+        return new FichaPersona(new PersonaResponse(p.getIdPersona(), nombreCompleto(p), p.getFotoUrl(),
+                p.getFechaNacimiento(), p.getPais() != null ? p.getPais().getNombrePais() : null,
+                List.copyOf(trabajos.values()), List.of(), false), catalogo);
+    }
+
+    /** El título de TMDB en el catálogo visible: mismo título (original o en español) y año ±1. */
+    private static TarjetaDto buscarEnCatalogo(Map<String, List<TarjetaDto>> catalogo, TmdbService.Trabajo t) {
+        for (String titulo : new String[] {t.tituloOriginal(), t.titulo()}) {
+            for (TarjetaDto c : titulo == null ? List.<TarjetaDto>of() : catalogo.getOrDefault(normalizar(titulo), List.of())) {
+                if (t.anio() == null || Math.abs(c.anio() - t.anio()) <= 1) {
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
     // ------------------------------------------------------------------ auxiliares
 
     private List<Contenido> disponibles(Contexto ctx) {
@@ -432,7 +509,11 @@ public class CatalogoService {
         return contenidos.stream().map(Contenido::getIdContenido).toList();
     }
 
-    private static String normalizar(String texto) {
+    static String nombreCompleto(Persona p) {
+        return (p.getNombres() + " " + p.getApellidos()).trim();
+    }
+
+    static String normalizar(String texto) {
         return Normalizer.normalize(texto, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT)

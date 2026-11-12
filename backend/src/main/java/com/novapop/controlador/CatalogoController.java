@@ -4,6 +4,7 @@ import com.novapop.dto.CatalogoDtos.CalificacionRequest;
 import com.novapop.dto.CatalogoDtos.DetalleResponse;
 import com.novapop.dto.CatalogoDtos.GeneroDto;
 import com.novapop.dto.CatalogoDtos.InicioResponse;
+import com.novapop.dto.CatalogoDtos.PersonaResponse;
 import com.novapop.dto.CatalogoDtos.TarjetaDto;
 import com.novapop.entidad.TipoContenido;
 import com.novapop.servicio.CatalogoService;
@@ -60,6 +61,12 @@ public class CatalogoController {
     public DetalleResponse detalle(@AuthenticationPrincipal Jwt jwt, @RequestHeader(CABECERA_PERFIL) Long idPerfil,
                                    @PathVariable Long idContenido) {
         return catalogoService.detalle(id(jwt), idPerfil, idContenido);
+    }
+
+    @GetMapping("/personas/{idPersona}")
+    public PersonaResponse persona(@AuthenticationPrincipal Jwt jwt, @RequestHeader(CABECERA_PERFIL) Long idPerfil,
+                                   @PathVariable Long idPersona) {
+        return catalogoService.conFilmografia(catalogoService.personaEnNovaPop(id(jwt), idPerfil, idPersona));
     }
 
     @GetMapping("/mi-lista")

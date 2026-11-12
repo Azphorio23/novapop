@@ -128,6 +128,16 @@ Para activarlo, crea un **ID de cliente de OAuth** (tipo *Aplicación web*) en [
 agrega como *Orígenes autorizados de JavaScript* `http://localhost:8080`, `http://localhost` y `https://novapop.onrender.com`,
 y pon el ID en la variable `NOVAPOP_GOOGLE_CLIENT_ID` (en `backend/.env` y en Render). Sin esa variable el botón no se muestra.
 
+## Filmografía de actores y directores
+
+En la ficha de un título, cada persona del elenco se puede abrir para ver:
+
+- **En NovaPop**: sus títulos del catálogo que el perfil puede ver (tablas PERSONA y CONTENIDO_PERSONA; respeta país y perfil infantil).
+- **También participó en**: el resto de su filmografía, consultada a TMDB desde el servidor (`TmdbService`), con roles en español.
+  Si alguno de esos títulos está en el catálogo, pasa a "En NovaPop" para poder abrirlo.
+
+La segunda parte usa la variable `NOVAPOP_TMDB_KEY` (en `backend/.env` y en Render). Sin ella la ficha muestra solo los títulos de NovaPop.
+
 ## Panel de administración
 
 Disponible en **/admin** (por ejemplo <http://localhost:8080/admin>). Lo usa el personal de la plataforma (tabla `USUARIO`),

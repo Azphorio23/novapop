@@ -39,7 +39,19 @@ public final class CatalogoDtos {
     public record ClasificacionDto(String codigo, String nombre, int edadMinima) {
     }
 
-    public record CreditoDto(String nombre, String rol, String personaje, String fotoUrl) {
+    public record CreditoDto(Long idPersona, String nombre, String rol, String personaje, String fotoUrl) {
+    }
+
+    /** Ficha de un actor o director: sus títulos en NovaPop y el resto de su filmografía (TMDB). */
+    public record PersonaResponse(Long id, String nombre, String fotoUrl, LocalDate fechaNacimiento, String pais,
+                                  List<TrabajoNovaPopDto> enNovaPop, List<TrabajoExternoDto> otrosTrabajos,
+                                  boolean filmografiaDisponible) {
+    }
+
+    public record TrabajoNovaPopDto(TarjetaDto contenido, String rol, String personaje) {
+    }
+
+    public record TrabajoExternoDto(String titulo, Short anio, String tipo, String posterUrl, String rol) {
     }
 
     public record EpisodioDto(Long id, int numero, String titulo, int duracionMinutos, int porcentajeVisto,

@@ -15,4 +15,11 @@ public interface ContenidoPersonaRepository extends JpaRepository<ContenidoPerso
              order by cp.ordenCreditos
             """)
     List<ContenidoPersona> findCreditos(@Param("idContenido") Long idContenido);
+
+    @Query("""
+            select cp from ContenidoPersona cp join fetch cp.contenido join fetch cp.rolProduccion
+             where cp.persona.idPersona = :idPersona and cp.estadoRegistro = 'A'
+             order by cp.contenido.anioLanzamiento desc, cp.ordenCreditos
+            """)
+    List<ContenidoPersona> findPorPersona(@Param("idPersona") Long idPersona);
 }

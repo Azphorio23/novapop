@@ -309,6 +309,64 @@ export function modal(html, { clase = 'modal-caja', alCerrar } = {}) {
   return { el: fondo, cerrar };
 }
 
+/** Iniciales para cuando una persona no tiene foto. */
+export const iniciales = nombre => String(nombre || '').split(' ').filter(Boolean).map(x => x[0]).slice(0, 2).join('');
+
+function edad(iso) {
+  const n = new Date(iso + 'T12:00:00'), hoy = new Date();
+  return hoy.getFullYear() - n.getFullYear() - (hoy < new Date(hoy.getFullYear(), n.getMonth(), n.getDate()) ? 1 : 0);
+}
+
+/** Ficha de un actor o director: sus títulos en NovaPop y el resto de su filmografía (TMDB). */
+export async function verPersona(idPersona) {
+  const { el, cerrar } = modal('<div class="cargando-modal"><div class="cargando"></div></div>', { clase: 'modal-caja modal-persona' });
+  const caja = el.querySelector('.modal-persona');
+  let p;
+  try {
+    p = await api(`/api/catalogo/personas/${idPersona}`, { perfil: true });
+  } catch (e) {
+    caja.innerHTML = `<p class="error-form">${esc(e.message)}</p><div class="modal-acciones"><button class="btn btn-borde" data-cerrar>Cerrar</button></div>`;
+    caja.querySelector('[data-cerrar]').onclick = cerrar;
+    return;
+  }
+  const datos = [
+    p.fechaNacimiento ? `Nació el ${fecha(p.fechaNacimiento)} (${edad(p.fechaNacimiento)} años)` : '',
+    p.pais ? esc(p.pais) : '',
+  ].filter(Boolean).join(' · ');
+  const roles = [...new Set(p.enNovaPop.map(t => t.rol).filter(Boolean))].join(', ');
+  caja.innerHTML = `
+    <button class="btn btn-sutil btn-icono cerrar-persona" data-cerrar aria-label="Cerrar">${icono('cerrar')}</button>
+    <header class="persona-cabecera">
+      ${p.fotoUrl ? `<img class="persona-foto" src="${esc(p.fotoUrl)}" alt="">` : `<span class="persona-foto">${esc(iniciales(p.nombre))}</span>`}
+      <div>
+        ${roles ? `<span class="kicker">${esc(roles)}</span>` : ''}
+        <h2>${esc(p.nombre)}</h2>
+        ${datos ? `<p class="muted">${datos}</p>` : ''}
+      </div>
+    </header>
+    <section class="persona-seccion">
+      <h3>En NovaPop <span class="muted">${p.enNovaPop.length}</span></h3>
+      ${p.enNovaPop.length ? `<div class="persona-grilla">${p.enNovaPop.map(t => `
+        <div class="persona-trabajo">${tarjeta(t.contenido, { vertical: true })}
+          <span>${esc(t.personaje || t.rol)}</span></div>`).join('')}</div>`
+        : '<p class="muted">Sus títulos no están disponibles en tu país o perfil.</p>'}
+    </section>
+    ${p.filmografiaDisponible ? `
+    <section class="persona-seccion">
+      <h3>También participó en</h3>
+      ${p.otrosTrabajos.length ? `<div class="persona-fila">${p.otrosTrabajos.map(t => `
+        <div class="persona-externo" title="${esc(t.titulo)}">
+          <img src="${esc(t.posterUrl)}" alt="" loading="lazy">
+          <b>${esc(t.titulo)}</b>
+          <small>${[t.anio, t.tipo === 'SERIE' ? 'Serie' : 'Película'].filter(Boolean).join(' · ')}</small>
+          ${t.rol ? `<small class="rol">${esc(t.rol)}</small>` : ''}
+        </div>`).join('')}</div>
+      <p class="fuente">Filmografía: TMDB. Estos títulos no forman parte del catálogo de NovaPop.</p>`
+        : '<p class="muted">No encontramos otros trabajos.</p>'}
+    </section>` : ''}`;
+  caja.querySelector('[data-cerrar]').onclick = cerrar;
+}
+
 export function verTrailer(url) {
   const id = idYoutube(url);
   if (!id) return;

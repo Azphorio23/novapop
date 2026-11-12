@@ -50,6 +50,7 @@ class NovaPopApiTest {
         registro.add("NOVAPOP_DB_USER", () -> "postgres");
         registro.add("NOVAPOP_DB_PASSWORD", () -> "postgres");
         registro.add("novapop.google.client-id", () -> ""); // ignora el Client ID que pueda haber en .env
+        registro.add("novapop.tmdb.key", () -> ""); // las pruebas no consultan TMDB
     }
 
     @AfterAll
@@ -115,6 +116,37 @@ class NovaPopApiTest {
                         .content("{\"correo\":\"demo@novapop.pe\",\"clave\":\"mala\"}"))
                 .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/perfiles")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void personaMuestraSusTitulosVisiblesParaElPerfil() throws Exception {
+        String token = login("demo@novapop.pe");
+        // Ton Roosendaal produjo casi todas las películas de Blender
+        JsonNode adulto = leer(mvc.perform(conPerfil(get("/api/catalogo/personas/1"), token, 2)).andExpect(status().isOk()));
+        assertThat(adulto.get("nombre").asText()).isEqualTo("Ton Roosendaal");
+        List<Long> visibles = new ArrayList<>();
+        adulto.get("enNovaPop").forEach(t -> visibles.add(t.get("contenido").get("idContenido").asLong()));
+        assertThat(visibles).contains(1L, 2L, 3L, 7L).doesNotHaveDuplicates();
+        assertThat(adulto.get("enNovaPop").get(0).get("rol").asText()).isEqualTo("Productor");
+        // Sin clave de TMDB no hay filmografía externa, pero la ficha funciona igual
+        assertThat(adulto.get("filmografiaDisponible").asBoolean()).isFalse();
+        assertThat(adulto.get("otrosTrabajos")).isEmpty();
+
+        // El perfil infantil (Peques) no ve Sintel (+13)
+        JsonNode nino = leer(mvc.perform(conPerfil(get("/api/catalogo/personas/1"), token, 3)).andExpect(status().isOk()));
+        List<Long> paraNinos = new ArrayList<>();
+        nino.get("enNovaPop").forEach(t -> paraNinos.add(t.get("contenido").get("idContenido").asLong()));
+        assertThat(paraNinos).contains(1L).doesNotContain(3L, 7L);
+
+        // Halina Reijn: la voz de Sintel, con su personaje
+        JsonNode halina = leer(mvc.perform(conPerfil(get("/api/catalogo/personas/7"), token, 2)).andExpect(status().isOk()));
+        assertThat(halina.get("enNovaPop").get(0).get("personaje").asText()).isEqualTo("Sintel");
+        assertThat(halina.get("enNovaPop").get(0).get("rol").asText()).isEqualTo("Voz");
+        // Los créditos del detalle traen el id para poder abrir la ficha
+        JsonNode detalle = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos/3"), token, 2)).andExpect(status().isOk()));
+        assertThat(detalle.get("creditos").get(0).get("idPersona").asLong()).isPositive();
+
+        mvc.perform(conPerfil(get("/api/catalogo/personas/999999"), token, 2)).andExpect(status().isNotFound());
     }
 
     @Test
