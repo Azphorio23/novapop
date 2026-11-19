@@ -107,6 +107,32 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- JaCoCo: informe de cobertura de las pruebas (caja blanca). Tras "mvn test" ver
+                 target/site/jacoco/index.html. Las clases de arranque y las entidades/DTO (solo datos) se excluyen. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.13</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/novapop/NovaPopApplication.class</exclude>
+                        <exclude>com/novapop/BaseDatosLocal.class</exclude>
+                        <exclude>com/novapop/entidad/**</exclude>
+                        <exclude>com/novapop/dto/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>preparar-agente</id>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>informe</id>
+                        <phase>test</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

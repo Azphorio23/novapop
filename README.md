@@ -114,7 +114,18 @@ mvn test
 
 Ejecuta los dos scripts SQL sobre PostgreSQL 17 embebido, valida que las entidades coincidan con las tablas
 (`ddl-auto=validate`) y recorre la API: login, catálogo por país y edad, búsqueda, Mi lista, calificaciones,
-reproducción, límite de pantallas, calidad por plan, registro, cambio de plan y auditoría.
+reproducción, límite de pantallas, calidad por plan, registro, cambio de plan, filmografía, respaldos y auditoría.
+Son las pruebas de **caja blanca** (conocen el código).
+
+**Cobertura (JaCoCo):** `mvn test` genera también `backend/target/site/jacoco/index.html` con el porcentaje del
+código que cubren las pruebas (actualmente ~77 % de las instrucciones). Entidades y DTO quedan excluidos por ser
+solo datos.
+
+> En Windows con un antivirus que intercepta HTTPS, Maven puede fallar al descargar plugins con un error
+> `PKIX path building failed`. Solución: `set MAVEN_OPTS=-Djavax.net.ssl.trustStoreType=Windows-ROOT` antes de `mvn`.
+
+Las pruebas de **caja negra** y de rendimiento (Playwright, Lighthouse) y la revisión de seguridad están en
+[`pruebas/`](pruebas/README.md) y [`docs/pentesting.md`](docs/pentesting.md).
 
 ## Continuar con Google
 
