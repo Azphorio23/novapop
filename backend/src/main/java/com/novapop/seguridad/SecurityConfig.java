@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.CacheControlHeadersWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import javax.crypto.SecretKey;
@@ -34,7 +35,11 @@ public class SecurityConfig {
                 // "no-store" solo para la API (lleva datos de la sesión); los archivos estáticos usan caché (WebCacheConfig)
                 .headers(h -> h.cacheControl(c -> c.disable())
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                PathPatternRequestMatcher.withDefaults().matcher("/api/**"), new CacheControlHeadersWriter())))
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/**"), new CacheControlHeadersWriter()))
+                        // Cabeceras recomendadas por la revisión de seguridad (ver docs/pentesting.md):
+                        // no filtrar la URL de origen a terceros y desactivar APIs del navegador que no usamos
+                        .referrerPolicy(r -> r.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .permissionsPolicyHeader(p -> p.policy("camera=(), microphone=(), geolocation=(), payment=()")))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/publico/**", "/api/admin/auth/**").permitAll()
