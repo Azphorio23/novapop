@@ -28,6 +28,7 @@ const ICONOS = {
   usuario: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   salir: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
   imagen: '<circle cx="12" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 19.5c1.3-3 3.7-4.5 6.5-4.5s5.2 1.5 6.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>',
+  instalar: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
   abajo: '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   atras: '<path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
   reloj: '<circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -217,6 +218,7 @@ export function navbar(activo = '') {
             <button id="cambiarPersonaje" role="menuitem">${icono('imagen')}<span>Cambiar personaje</span></button>
             <a href="/perfiles.html" role="menuitem">${icono('usuario')}<span>Cambiar de perfil</span></a>
             <a href="/cuenta.html" role="menuitem">${icono('lapiz')}<span>Mi cuenta</span></a>
+            <button id="instalarApp" class="oculto" role="menuitem">${icono('instalar')}<span>Instalar app</span></button>
             <hr>
             <button id="salir" class="salir" role="menuitem">${icono('salir')}<span>Cerrar sesión</span></button>
           </div>
@@ -242,6 +244,18 @@ export function navbar(activo = '') {
   document.addEventListener('click', cerrarMenu);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarMenu(); });
   $('#salir').onclick = () => { sesion.cerrar(); location.href = '/'; };
+  // PWA: "Instalar app" aparece solo si el navegador lo permite (ver /js/tema.js)
+  const instalar = $('#instalarApp');
+  const mostrarInstalar = () => instalar.classList.toggle('oculto', !window.novapopApp?.instalable());
+  document.addEventListener('instalable', mostrarInstalar);
+  document.addEventListener('instalada', mostrarInstalar);
+  mostrarInstalar();
+  instalar.onclick = async () => {
+    cerrarMenu();
+    if (await window.novapopApp.instalar()) toast('NovaPop quedó instalada');
+    mostrarInstalar();
+  };
+
   $('#cambiarPersonaje').onclick = async () => {
     cerrarMenu();
     const actual = sesion.perfil || {};

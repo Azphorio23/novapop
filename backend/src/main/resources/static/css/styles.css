@@ -643,3 +643,4 @@ img.ini { object-fit: cover; object-position: top; }
   .persona-grilla { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
   .persona-fila { grid-auto-columns: 104px; }
 }
+.ico-sin-conexion { width: 84px; height: 84px; margin: 22px auto 4px; display: block; color: var(--pop); }

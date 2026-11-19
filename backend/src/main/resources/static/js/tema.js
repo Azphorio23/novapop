@@ -25,3 +25,31 @@
     },
   };
 })();
+
+// PWA: registra el service worker (caché y página sin conexión) y guarda el aviso de instalación
+// del navegador para mostrar el botón "Instalar app" solo cuando se pueda instalar.
+(function () {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () { /* sin PWA: la web funciona igual */ });
+    });
+  }
+  var aviso = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    aviso = e;
+    document.dispatchEvent(new CustomEvent('instalable'));
+  });
+  window.addEventListener('appinstalled', function () {
+    aviso = null;
+    document.dispatchEvent(new CustomEvent('instalada'));
+  });
+  window.novapopApp = {
+    instalable: function () { return aviso !== null; },
+    instalar: function () {
+      if (!aviso) return Promise.resolve(false);
+      aviso.prompt();
+      return aviso.userChoice.then(function (r) { aviso = null; return r.outcome === 'accepted'; });
+    },
+  };
+})();

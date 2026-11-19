@@ -6,6 +6,9 @@
   <title>NovaPop — Películas y series</title>
   <meta name="description" content="NovaPop: plataforma académica de streaming de películas y series abiertas.">
   <link rel="icon" href="/img/logo-icono.png" type="image/png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0a13">
+  <link rel="apple-touch-icon" href="/img/icono-apple.png">
   <script src="/js/tema.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +20,7 @@
     <a href="/" class="marca"><img src="/img/logo.webp" alt=""><span>Nova<span class="pop">Pop</span></span></a>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn-tema" onclick="novapopTema.alternar()" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema"><span class="solo-oscuro"><svg class="ico-tema sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.3" fill="currentColor"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.4 5.4l1.6 1.6M17 17l1.6 1.6M5.4 18.6 7 17M17 7l1.6-1.6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg></span><span class="solo-claro"><svg class="ico-tema luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z" fill="currentColor"/><path d="M16.6 3.2l.55 1.45 1.45.55-1.45.55-.55 1.45-.55-1.45-1.45-.55 1.45-.55z" fill="currentColor"/></svg></span></button>
+      <button class="btn btn-borde btn-chico oculto" id="btnInstalar">Instalar app</button>
       <a class="btn btn-sutil btn-chico" id="btnEntrar" href="/login.html">Iniciar sesión</a>
     </div>
   </header>
@@ -59,6 +63,14 @@
   <script type="module">
     import { api, sesion } from '/js/api.js';
     import { esc, soles } from '/js/ui.js';
+
+    // PWA: botón "Instalar app" solo cuando el navegador permite instalar (ver /js/tema.js)
+    const btnInstalar = document.getElementById('btnInstalar');
+    const mostrarInstalar = () => btnInstalar.classList.toggle('oculto', !window.novapopApp?.instalable());
+    document.addEventListener('instalable', mostrarInstalar);
+    document.addEventListener('instalada', mostrarInstalar);
+    mostrarInstalar();
+    btnInstalar.onclick = () => window.novapopApp.instalar().then(mostrarInstalar);
 
     if (sesion.token) {
       const entrar = document.getElementById('btnEntrar');
