@@ -16,6 +16,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -357,6 +363,61 @@ class NovaPopApiTest {
         // Las películas de Blender siguen siendo reproducibles
         JsonNode bbb = leer(mvc.perform(conPerfil(get("/api/catalogo/contenidos/1"), token, 2)));
         assertThat(bbb.get("disponibleParaVer").asBoolean()).isTrue();
+    }
+
+    // ------------------------------------------------------------------ copias de seguridad
+
+    @Test
+    void respaldoDelAdministradorSeRestauraCompletoEnUnaBaseVacia() throws Exception {
+        // Solo el rol ADMINISTRADOR: un cliente (sin STAFF) y el editor reciben 403
+        mvc.perform(get("/api/admin/respaldo").header("Authorization", "Bearer " + login("demo@novapop.pe")))
+                .andExpect(status().isForbidden());
+        mvc.perform(conToken(get("/api/admin/respaldo"), loginStaff("editor"))).andExpect(status().isForbidden());
+
+        var respuesta = mvc.perform(conToken(get("/api/admin/respaldo"), loginStaff("admin")))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(respuesta.getHeader("Content-Disposition")).contains("attachment").contains(".sql");
+        String sql = respuesta.getContentAsString(StandardCharsets.UTF_8);
+
+        // Restauración: base nueva solo con el esquema (01 + 03 + 07) y luego el respaldo
+        Path carpeta = Files.exists(Path.of("..", "database")) ? Path.of("..", "database") : Path.of("database");
+        try (EmbeddedPostgres nueva = EmbeddedPostgres.builder().start();
+             Connection c = nueva.getPostgresDatabase().getConnection(); Statement st = c.createStatement()) {
+            for (String script : List.of("01_esquema.sql", "03_migracion_solo_trailer.sql", "07_posters_verticales.sql")) {
+                st.execute(Files.readString(carpeta.resolve(script)));
+            }
+            st.execute(sql);
+
+            List<String> tablas = jdbc.queryForList("""
+                    select table_name from information_schema.tables
+                     where table_schema = 'novapop' and table_type = 'BASE TABLE'""", String.class);
+            assertThat(tablas).hasSize(35);
+            for (String t : tablas) {
+                long original = jdbc.queryForObject("select count(*) from novapop." + t, Long.class);
+                try (ResultSet rs = st.executeQuery("select count(*) from novapop." + t)) {
+                    rs.next();
+                    assertThat(rs.getLong(1)).as("filas restauradas de " + t).isEqualTo(original);
+                }
+            }
+            // Los contadores de IDs continúan después del último registro: un INSERT nuevo no choca
+            st.execute("insert into novapop.genero (nombre_genero) values ('Género tras restaurar')");
+        }
+    }
+
+    @Test
+    void misDatosDescargaLoDelUsuarioSinContrasenaNiPin() throws Exception {
+        String cuerpo = mvc.perform(get("/api/cuenta/mis-datos").header("Authorization", "Bearer " + login("demo@novapop.pe")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        JsonNode datos = json.readTree(cuerpo);
+        assertThat(datos.get("cuenta").get("correo").asText()).isEqualTo("demo@novapop.pe");
+        assertThat(datos.get("perfiles")).isNotEmpty();
+        assertThat(datos.get("perfiles").get(0).has("historial")).isTrue();
+        assertThat(datos.get("suscripciones")).isNotEmpty();
+        // Nada sensible: ni la contraseña cifrada (BCrypt empieza con $2) ni el PIN de Ana (1234)
+        assertThat(cuerpo).doesNotContain("clave_hash").doesNotContain("$2a$").doesNotContain("pin_control_parental");
+        assertThat(datos.get("perfiles").findValues("tiene_pin")).anyMatch(JsonNode::asBoolean);
+        // Solo los datos propios: la cuenta básica no aparece
+        assertThat(cuerpo).doesNotContain("basico@novapop.pe");
     }
 
     // ------------------------------------------------------------------ panel de administración

@@ -138,6 +138,19 @@ En la ficha de un título, cada persona del elenco se puede abrir para ver:
 
 La segunda parte usa la variable `NOVAPOP_TMDB_KEY` (en `backend/.env` y en Render). Sin ella la ficha muestra solo los títulos de NovaPop.
 
+## Copias de seguridad
+
+- **Administrador** (panel → tablero → *Descargar respaldo*, solo el rol ADMINISTRADOR): un archivo `.sql` con los datos
+  de las 35 tablas, en orden de dependencias y con los contadores de IDs reajustados (`GET /api/admin/respaldo`).
+  Para restaurar: en una base vacía ejecuta `01_esquema.sql`, `03_migracion_solo_trailer.sql` y `07_posters_verticales.sql`,
+  y luego el respaldo (va dentro de `BEGIN ... COMMIT`: si algo falla, no se guarda nada).
+  Incluye las contraseñas cifradas (BCrypt): guárdalo en un lugar seguro.
+- **Usuario** (*Mi cuenta* → *Descargar mis datos*): un JSON con su cuenta, plan, pagos, dispositivos, perfiles, lista,
+  historial y calificaciones (`GET /api/cuenta/mis-datos`). No incluye la contraseña ni el PIN.
+
+La prueba `respaldoDelAdministradorSeRestauraCompletoEnUnaBaseVacia` restaura el respaldo en otra base y compara
+las filas de cada tabla. También se puede respaldar con `pg_dump` desde la PC (cadena de conexión de Supabase).
+
 ## Panel de administración
 
 Disponible en **/admin** (por ejemplo <http://localhost:8080/admin>). Lo usa el personal de la plataforma (tabla `USUARIO`),

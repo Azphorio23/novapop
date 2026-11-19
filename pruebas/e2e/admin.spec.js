@@ -21,6 +21,14 @@ test('login del panel y cada uno de sus módulos', async ({ page }) => {
   await expect(page).toHaveURL(/\/admin\/$/);
   await expect(page.locator('.hero-admin h1')).toContainText(/Buen/);
 
+  // Copia de seguridad completa (.sql) desde el tablero
+  const [descarga] = await Promise.all([page.waitForEvent('download'), page.click('#btnRespaldo')]);
+  expect(descarga.suggestedFilename()).toMatch(/^novapop-respaldo-\d{8}-\d{4}\.sql$/);
+  const sql = await (await import('node:fs/promises')).readFile(await descarga.path(), 'utf8');
+  expect(sql).toContain('NovaPop — Respaldo de datos');
+  expect(sql).toContain('INSERT INTO contenido');
+  expect(sql).toMatch(/^COMMIT;$/m);
+
   const token = await page.evaluate(() => localStorage.getItem('np_admin_token'));
   const recursos = await (await page.request.get('/api/admin/recursos', { headers: { Authorization: 'Bearer ' + token } })).json();
   expect(recursos.length).toBeGreaterThan(10);

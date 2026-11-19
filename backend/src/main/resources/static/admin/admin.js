@@ -84,6 +84,27 @@ function ruta() {
 }
 
 // ------------------------------------------------------------------ tablero
+/** Copia de seguridad de toda la base (.sql). El servidor solo la entrega al rol ADMINISTRADOR. */
+async function descargarRespaldo(boton) {
+  boton.disabled = true;
+  const original = boton.innerHTML;
+  boton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generando…';
+  try {
+    const r = await fetch('/api/admin/respaldo', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) throw new Error(r.status === 403 ? 'Solo el rol ADMINISTRADOR puede generar respaldos' : `Error ${r.status}`);
+    const nombre = /filename="?([^";]+)/.exec(r.headers.get('Content-Disposition') || '')?.[1] || 'novapop-respaldo.sql';
+    const enlace = Object.assign(document.createElement('a'), { href: URL.createObjectURL(await r.blob()), download: nombre });
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+    toast('Respaldo descargado: ' + nombre);
+  } catch (e) {
+    toast(e.message, 'danger');
+  } finally {
+    boton.disabled = false;
+    boton.innerHTML = original;
+  }
+}
+
 function vistaTablero() {
   document.title = 'Panel · NovaPop';
   const grupos = {};
@@ -96,7 +117,11 @@ function vistaTablero() {
       <h1 class="display-6 mb-2">${saludo}, ${esc(usuario.nombres || usuario.usuario)}</h1>
       <p class="mb-3 opacity-75" style="max-width: 60ch">Gestiona las ${recursos.length} tablas principales de NovaPop:
         catálogos, contenido, elenco, planes y cuentas. Los cambios quedan registrados en los campos de auditoría.</p>
-      <a class="btn btn-warning fw-semibold" href="#/contenidos"><i class="bi bi-film me-1"></i> Gestionar películas y series</a>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-warning fw-semibold" href="#/contenidos"><i class="bi bi-film me-1"></i> Gestionar películas y series</a>
+        ${usuario.rol === 'ADMINISTRADOR' ? `<button class="btn btn-outline-light fw-semibold" id="btnRespaldo" title="Descarga un archivo .sql con los datos de todas las tablas">
+          <i class="bi bi-database-down me-1"></i> Descargar respaldo</button>` : ''}
+      </div>
     </section>
     ${Object.entries(grupos).map(([grupo, lista]) => `
       <h2 class="h6 text-uppercase text-body-secondary fw-bold mt-4 mb-3">${esc(grupo)}</h2>
@@ -115,6 +140,7 @@ function vistaTablero() {
             </a>
           </div>`).join('')}
       </div>`).join('')}`;
+  $('btnRespaldo')?.addEventListener('click', e => descargarRespaldo(e.currentTarget));
 }
 
 // ------------------------------------------------------------------ listado

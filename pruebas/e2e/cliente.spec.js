@@ -63,6 +63,16 @@ test.describe('cliente con sesión', () => {
     }
   });
 
+  test('mi cuenta: descargar mis datos (copia de seguridad del usuario)', async ({ page }) => {
+    await page.goto('/cuenta.html');
+    const [descarga] = await Promise.all([page.waitForEvent('download'), page.click('#misDatos')]);
+    expect(descarga.suggestedFilename()).toMatch(/^novapop-mis-datos-[\d-]+\.json$/);
+    const datos = JSON.parse(await (await import('node:fs/promises')).readFile(await descarga.path(), 'utf8'));
+    expect(datos.cuenta.correo).toBeTruthy();
+    expect(datos.perfiles.length).toBeGreaterThan(0);
+    expect(JSON.stringify(datos)).not.toContain('clave_hash');
+  });
+
   test('mi lista', async ({ page }) => {
     await page.goto('/inicio.html?lista=1');
     await expect(page.locator('.explorar h1')).toHaveText('Mi lista');

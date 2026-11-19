@@ -9,6 +9,7 @@ import com.novapop.dto.CuentaDtos.MetodoPagoRequest;
 import com.novapop.dto.CuentaDtos.PagoDto;
 import com.novapop.dto.CuentaDtos.RenovacionRequest;
 import com.novapop.servicio.CuentaService;
+import com.novapop.servicio.RespaldoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.novapop.controlador.CuentaActual.id;
 
@@ -34,6 +36,13 @@ import static com.novapop.controlador.CuentaActual.id;
 public class CuentaController {
 
     private final CuentaService cuentaService;
+    private final RespaldoService respaldoService;
+
+    /** Todos los datos de la cuenta, para descargarlos (copia de seguridad del usuario). */
+    @GetMapping("/mis-datos")
+    public Map<String, Object> misDatos(@AuthenticationPrincipal Jwt jwt) {
+        return respaldoService.datosDeCuenta(id(jwt));
+    }
 
     @GetMapping
     public CuentaResponse obtener(@AuthenticationPrincipal Jwt jwt) {

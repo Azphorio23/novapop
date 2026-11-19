@@ -43,7 +43,8 @@
         ${!sesion.perfil ? '<p style="margin-top:-14px;margin-bottom:22px"><a class="btn btn-borde btn-chico" href="/perfiles.html">← Volver a perfiles</a></p>' : ''}
 
         <section class="bloque">
-          <div class="bloque-cabecera"><h2>Datos de la cuenta</h2></div>
+          <div class="bloque-cabecera"><h2>Datos de la cuenta</h2>
+            <button class="btn btn-borde btn-chico" id="misDatos" title="Descarga un archivo con todos tus datos">${icono('instalar')} Descargar mis datos</button></div>
           <div class="lista-items">
             <div class="item"><div class="item-texto"><small>Correo</small>${esc(cuenta.correo)}</div></div>
             <div class="item"><div class="item-texto"><small>País</small>${esc(cuenta.pais.nombre)}</div>
@@ -107,6 +108,20 @@
         accion(() => api(`/api/cuenta/metodos-pago/${b.dataset.pred}/predeterminado`, { method: 'PUT' }), 'Método predeterminado actualizado'));
       main.querySelectorAll('[data-borrar-metodo]').forEach(b => b.onclick = () => confirm('¿Eliminar este método de pago?') &&
         accion(() => api(`/api/cuenta/metodos-pago/${b.dataset.borrarMetodo}`, { method: 'DELETE' }), 'Método eliminado'));
+      // Copia de seguridad del usuario: un JSON con su cuenta, plan, pagos, perfiles y actividad
+      document.getElementById('misDatos').onclick = async () => {
+        try {
+          const datos = await api('/api/cuenta/mis-datos');
+          const archivo = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+          const enlace = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(archivo), download: `novapop-mis-datos-${new Date().toISOString().slice(0, 10)}.json` });
+          enlace.click();
+          URL.revokeObjectURL(enlace.href);
+          toast('Tus datos se descargaron');
+        } catch (e) {
+          toast(e.message, 'error');
+        }
+      };
       main.querySelectorAll('[data-borrar-disp]').forEach(b => b.onclick = () => {
         if (!confirm('¿Quitar este dispositivo de tu cuenta?')) return;
         if (b.dataset.borrarDisp === sesion.dispositivo) sesion.dispositivo = null;
