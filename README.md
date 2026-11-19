@@ -10,6 +10,13 @@ Plataforma académica de streaming de películas y series, construida sobre el m
 - **Despliegue:** Docker + Render (`Dockerfile` y `render.yaml`)
 - **Contenido:** películas abiertas de Blender (Creative Commons), alojadas en Wikimedia Commons
 
+### Documentación
+
+- 📘 [Manual del usuario](docs/manual-usuario.md) — cómo usar NovaPop, con capturas
+- 🛠️ [Manual del programador](docs/manual-programador.md) — arquitectura, instalación, API y despliegue
+- 🔒 [Revisión de seguridad (pentesting)](docs/pentesting.md)
+- 🧪 [Pruebas y rendimiento (Playwright + Lighthouse)](pruebas/README.md)
+
 ```
 StreamingProyecto/
 ├── database/
