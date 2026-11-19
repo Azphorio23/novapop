@@ -1,0 +1,16 @@
+{
+  "name": "novapop-pruebas",
+  "private": true,
+  "description": "Pruebas de caja negra (Playwright) y auditorías de rendimiento (Lighthouse) de NovaPop",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:escritorio": "playwright test --project=escritorio",
+    "reporte": "playwright show-report reportes/playwright",
+    "lighthouse": "node lighthouse.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "lighthouse": "^13.6.0"
+  }
+}

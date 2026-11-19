@@ -16,6 +16,9 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.CacheControlHeadersWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -28,6 +31,10 @@ public class SecurityConfig {
     SecurityFilterChain filtros(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable()) // API sin cookies: el token viaja en la cabecera Authorization
+                // "no-store" solo para la API (lleva datos de la sesión); los archivos estáticos usan caché (WebCacheConfig)
+                .headers(h -> h.cacheControl(c -> c.disable())
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/**"), new CacheControlHeadersWriter())))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/publico/**", "/api/admin/auth/**").permitAll()
