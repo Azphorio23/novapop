@@ -426,14 +426,10 @@ img.ini { object-fit: cover; object-position: top; }
 @keyframes brillo { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .esqueleto { animation: none; } }
 
-/* Esqueleto del catálogo: imita el hero y las filas de pósters mientras llegan los datos */
-.hero-esqueleto { height: min(82vh, 760px); min-height: 480px; border-radius: 0; }
-.fila-esqueleto { padding: 0 var(--gutter); margin-top: 34px; }
-.filas .fila-esqueleto:first-child { margin-top: -9vh; position: relative; z-index: 3; }
-.titulo-esqueleto { height: 22px; width: 220px; max-width: 60%; margin-bottom: 14px; }
-.pista-esqueleto { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(150px, 14vw, 215px); gap: 12px; overflow: hidden; }
-.tarjeta-esqueleto { aspect-ratio: 2/3; border-radius: var(--radius-sm); }
-@media (max-width: 760px) { .pista-esqueleto { grid-auto-columns: 36vw; } }
+/* Esqueleto del catálogo: usa las clases reales (hero, fila, pista, tarjeta); solo pinta el relleno con brillo */
+.hero-esqueleto { position: absolute; inset: 0; border-radius: 0; }
+.esqueleto-titulo { display: inline-block; height: 1.3rem; width: min(220px, 45vw); border-radius: 6px; vertical-align: middle; }
+.tarjeta.esqueleto { cursor: default; } /* un recuadro vacío, sin la imagen ni la capa de texto */
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {

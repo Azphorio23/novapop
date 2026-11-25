@@ -443,12 +443,17 @@ export function cargando(contenedor) {
 }
 
 /** Esqueleto del catálogo: recuadros con brillo que imitan el hero y las filas mientras llegan los datos.
- *  Da sensación de rapidez en conexiones lentas (se ve la estructura de inmediato, no una pantalla vacía). */
-export function esqueletoCatalogo(contenedor, { filas = 3, tarjetas = 7 } = {}) {
-  const fila = `<section class="fila-esqueleto">
-      <div class="esqueleto titulo-esqueleto"></div>
-      <div class="pista-esqueleto">${'<div class="esqueleto tarjeta-esqueleto"></div>'.repeat(tarjetas)}</div>
+ *  Reutiliza las clases reales (hero, filas, fila, pista) para que encaje con el catálogo que llega después:
+ *  primera fila horizontal (como "Seguir viendo") y las siguientes con pósters verticales. */
+export function esqueletoCatalogo(contenedor) {
+  const filaSkel = (vertical, n) => `
+    <section class="fila">
+      <h2><span class="esqueleto esqueleto-titulo"></span></h2>
+      <div class="carrusel"><div class="pista${vertical ? ' vertical' : ''}">
+        ${`<div class="tarjeta${vertical ? ' vertical' : ''} esqueleto"></div>`.repeat(n)}
+      </div></div>
     </section>`;
-  contenedor.innerHTML = `<div class="esqueleto hero-esqueleto"></div>
-    <div class="filas">${fila.repeat(filas)}</div>`;
+  contenedor.innerHTML = `
+    <section class="hero"><div class="esqueleto hero-esqueleto"></div></section>
+    <div class="filas">${filaSkel(false, 6)}${filaSkel(true, 8)}${filaSkel(true, 8)}</div>`;
 }
