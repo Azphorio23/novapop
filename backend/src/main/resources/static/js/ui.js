@@ -138,9 +138,18 @@ document.addEventListener('error', e => {
   }
 }, true);
 
+/** Baja el tamaño de una imagen de TMDB (p. ej. w500 → w342) para que pese menos en conexiones lentas.
+ *  Las imágenes que no son de TMDB (pósters de Blender en Wikimedia) se dejan igual. */
+export function tmdbTamano(url, ancho) {
+  return typeof url === 'string' ? url.replace(/\/t\/p\/(w\d+|original)\//, `/t/p/w${ancho}/`) : url;
+}
+
 /** vertical = usa el póster 2:3 si existe (si no, recorta la imagen horizontal). */
 export function imagen(t, vertical = false) {
-  const url = (vertical && t.posterVerticalUrl) || t.posterUrl;
+  let url = (vertical && t.posterVerticalUrl) || t.posterUrl;
+  if (vertical && t.posterVerticalUrl) {
+    url = tmdbTamano(url, 342); // las tarjetas son chicas: w342 basta y pesa ~60 % menos que w500
+  }
   return url
     ? `<img src="${esc(url)}" alt="" loading="lazy" data-titulo="${esc(t.titulo)}">`
     : `<div class="sin-imagen">${esc(t.titulo)}</div>`;
@@ -431,4 +440,15 @@ export function pedirPin(nombrePerfil, verificar) {
 
 export function cargando(contenedor) {
   contenedor.innerHTML = '<div style="display:grid;place-items:center;padding:120px 0"><div class="cargando"></div></div>';
+}
+
+/** Esqueleto del catálogo: recuadros con brillo que imitan el hero y las filas mientras llegan los datos.
+ *  Da sensación de rapidez en conexiones lentas (se ve la estructura de inmediato, no una pantalla vacía). */
+export function esqueletoCatalogo(contenedor, { filas = 3, tarjetas = 7 } = {}) {
+  const fila = `<section class="fila-esqueleto">
+      <div class="esqueleto titulo-esqueleto"></div>
+      <div class="pista-esqueleto">${'<div class="esqueleto tarjeta-esqueleto"></div>'.repeat(tarjetas)}</div>
+    </section>`;
+  contenedor.innerHTML = `<div class="esqueleto hero-esqueleto"></div>
+    <div class="filas">${fila.repeat(filas)}</div>`;
 }

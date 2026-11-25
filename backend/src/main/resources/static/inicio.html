@@ -19,7 +19,7 @@
   <main class="catalogo" id="main"></main>
   <script type="module">
     import { api, exigirPerfil } from '/js/api.js';
-    import { esc, icono, navbar, pieDePagina, tarjeta, fila, activarCarruseles, duracion, fecha, cargando, toast, verTrailer } from '/js/ui.js';
+    import { esc, icono, navbar, pieDePagina, tarjeta, fila, activarCarruseles, duracion, fecha, cargando, esqueletoCatalogo, toast, verTrailer } from '/js/ui.js';
 
     const params = new URLSearchParams(location.search);
     const tipo = params.get('tipo');
@@ -29,7 +29,8 @@
 
     if (exigirPerfil()) {
       navbar(lista ? 'lista' : tipo === 'PELICULA' ? 'peliculas' : tipo === 'SERIE' ? 'series' : q ? '' : 'inicio');
-      cargando(main);
+      // El inicio muestra el esqueleto del catálogo (hero + filas); las demás vistas, el spinner
+      (tipo || q || lista) ? cargando(main) : esqueletoCatalogo(main);
       (tipo || q || lista ? explorar() : inicio())
         .catch(err => { main.innerHTML = `<div class="vacio" style="padding-top:140px"><div class="ico"><img src="/img/logo.webp" alt=""></div><p>${esc(err.message)}</p></div>`; })
         .finally(pieDePagina);
@@ -74,7 +75,7 @@
       return `<section class="hero" aria-roledescription="carrusel">
         ${destacados.map((t, i) => `
           <div class="hero-slide ${i === 0 ? 'activo' : ''}">
-            <img src="${esc(t.posterUrl || '')}" alt="">
+            <img src="${esc(t.posterUrl || '')}" alt="" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
             <div class="hero-info">
               <span class="kicker">${t.tipo === 'SERIE' ? 'Serie' : 'Película'} · Estreno en NovaPop</span>
               <h1>${esc(t.titulo)}</h1>

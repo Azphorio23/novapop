@@ -424,6 +424,16 @@ img.ini { object-fit: cover; object-position: top; }
 /* ---------- Esqueleto de carga ---------- */
 .esqueleto { background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%); background-size: 200% 100%; animation: brillo 1.4s infinite; border-radius: var(--radius-sm); }
 @keyframes brillo { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .esqueleto { animation: none; } }
+
+/* Esqueleto del catálogo: imita el hero y las filas de pósters mientras llegan los datos */
+.hero-esqueleto { height: min(82vh, 760px); min-height: 480px; border-radius: 0; }
+.fila-esqueleto { padding: 0 var(--gutter); margin-top: 34px; }
+.filas .fila-esqueleto:first-child { margin-top: -9vh; position: relative; z-index: 3; }
+.titulo-esqueleto { height: 22px; width: 220px; max-width: 60%; margin-bottom: 14px; }
+.pista-esqueleto { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(150px, 14vw, 215px); gap: 12px; overflow: hidden; }
+.tarjeta-esqueleto { aspect-ratio: 2/3; border-radius: var(--radius-sm); }
+@media (max-width: 760px) { .pista-esqueleto { grid-auto-columns: 36vw; } }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
