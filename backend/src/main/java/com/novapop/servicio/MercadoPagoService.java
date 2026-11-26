@@ -55,7 +55,7 @@ public class MercadoPagoService {
     public Preferencia crearPreferencia(PlanSuscripcion plan, long idCuenta, String urlBase) {
         exigirConfigurado();
         String retorno = urlBase + "/cuenta.html";
-        Map<String, Object> cuerpo = Map.of(
+        Map<String, Object> cuerpo = new java.util.HashMap<>(Map.of(
                 "items", List.of(Map.of(
                         "title", "NovaPop — Plan " + plan.getNombrePlan(),
                         "quantity", 1,
@@ -63,9 +63,11 @@ public class MercadoPagoService {
                         "currency_id", "PEN")),
                 "external_reference", idCuenta + ":" + plan.getIdPlan(),
                 "statement_descriptor", "NOVAPOP",
-                "back_urls", Map.of("success", retorno, "pending", retorno, "failure", retorno),
-                // auto_return solo en producción (https): Mercado Pago rechaza volver a http://localhost
-                "auto_return", urlBase.startsWith("https") ? "approved" : "");
+                "back_urls", Map.of("success", retorno, "pending", retorno, "failure", retorno)));
+        // auto_return solo cuando la URL de retorno es pública (https): Mercado Pago rechaza volver a http://localhost
+        if (urlBase.startsWith("https")) {
+            cuerpo.put("auto_return", "approved");
+        }
         try {
             Map<?, ?> r = mp.post().uri("/checkout/preferences")
                     .headers(h -> h.setBearerAuth(token))
@@ -74,10 +76,10 @@ public class MercadoPagoService {
             if (r == null || r.get("id") == null) {
                 throw NovaPopException.invalido("Mercado Pago no devolvió la preferencia de pago");
             }
-            // Con credenciales de prueba, sandbox_init_point es la página de pago de sandbox
-            Object url = r.get("sandbox_init_point");
+            // init_point: con credenciales de prueba abre el checkout en modo sandbox (el sandbox_init_point heredado falla)
+            Object url = r.get("init_point");
             if (url == null) {
-                url = r.get("init_point");
+                url = r.get("sandbox_init_point");
             }
             return new Preferencia(String.valueOf(url), String.valueOf(r.get("id")));
         } catch (RestClientException e) {
