@@ -65,4 +65,8 @@ public final class CuentaDtos {
 
     public record DispositivoRequest(@NotNull TipoDispositivo tipo, @NotBlank @Size(max = 100) String nombre) {
     }
+
+    /** Resultado al volver de Mercado Pago: estado del pago y, si fue aprobado, la cuenta ya actualizada. */
+    public record ConfirmacionPago(String estado, CuentaResponse cuenta) {
+    }
 }

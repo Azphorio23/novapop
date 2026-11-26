@@ -20,6 +20,9 @@ services:
       # Clave de TMDB (filmografía de actores y directores); opcional
       - key: NOVAPOP_TMDB_KEY
         sync: false
+      # Token de Mercado Pago (pasarela de pago); opcional
+      - key: NOVAPOP_MERCADOPAGO_TOKEN
+        sync: false
       # Clave para firmar las sesiones: Render la genera sola
       - key: NOVAPOP_JWT_SECRET
         generateValue: true

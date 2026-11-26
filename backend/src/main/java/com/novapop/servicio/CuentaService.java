@@ -39,6 +39,7 @@ public class CuentaService {
 
     private final CuentaRepository cuentaRepository;
     private final PlanSuscripcionRepository planRepository;
+    private final MercadoPagoService mercadoPagoService;
     private final SuscripcionRepository suscripcionRepository;
     private final MetodoPagoRepository metodoPagoRepository;
     private final PagoSuscripcionRepository pagoRepository;
@@ -98,6 +99,48 @@ public class CuentaService {
             suscripcionRepository.saveAndFlush(actual);
         });
         suscribir(cuentaRepository.getReferenceById(idCuenta), plan, metodo);
+        return obtener(idCuenta);
+    }
+
+    /**
+     * Activa un plan tras un pago aprobado por Mercado Pago: cancela la suscripción vigente, abre la nueva y
+     * registra el pago contra un método "Mercado Pago" (se reutiliza el de la cuenta si ya existe).
+     */
+    /** ¿Está configurada la pasarela de pago (Mercado Pago)? */
+    public boolean pasarelaActiva() {
+        return mercadoPagoService.configurado();
+    }
+
+    /** Crea la preferencia de pago de un plan y devuelve la URL del checkout de Mercado Pago. */
+    public MercadoPagoService.Preferencia iniciarPagoMercadoPago(Long idCuenta, Long idPlan, String urlBase) {
+        PlanSuscripcion plan = planRepository.findById(idPlan).filter(PlanSuscripcion::estaActivo)
+                .orElseThrow(() -> NovaPopException.invalido("Plan no válido"));
+        return mercadoPagoService.crearPreferencia(plan, idCuenta, urlBase);
+    }
+
+    @Transactional
+    public CuentaResponse activarPlanMercadoPago(Long idCuenta, Long idPlan, String ultimosDigitos) {
+        PlanSuscripcion plan = planRepository.findById(idPlan).filter(PlanSuscripcion::estaActivo)
+                .orElseThrow(() -> NovaPopException.invalido("Plan no válido"));
+        Cuenta cuenta = cuentaRepository.getReferenceById(idCuenta);
+        String etiqueta = "Mercado Pago" + (ultimosDigitos != null ? " •••• " + ultimosDigitos : "");
+        MetodoPago metodo = metodoPagoRepository.findActivos(idCuenta).stream()
+                .filter(m -> m.getNumeroEnmascarado() != null && m.getNumeroEnmascarado().startsWith("Mercado Pago"))
+                .findFirst().orElseGet(() -> {
+                    MetodoPago nuevo = new MetodoPago();
+                    nuevo.setCuenta(cuenta);
+                    nuevo.setTipoMetodo(TipoMetodoPago.TARJETA_CREDITO);
+                    nuevo.setEsPredeterminado(false);
+                    return nuevo;
+                });
+        metodo.setNumeroEnmascarado(etiqueta);
+        metodo = metodoPagoRepository.save(metodo);
+        suscripcionRepository.findActiva(idCuenta).ifPresent(actual -> {
+            actual.setSituacionSuscripcion(SituacionSuscripcion.CANCELADA);
+            actual.setFechaFin(LocalDate.now());
+            suscripcionRepository.saveAndFlush(actual);
+        });
+        suscribir(cuenta, plan, metodo);
         return obtener(idCuenta);
     }
 

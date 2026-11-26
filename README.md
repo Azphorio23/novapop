@@ -169,6 +169,17 @@ La segunda parte usa la variable `NOVAPOP_TMDB_KEY` (en `backend/.env` y en Rend
 La prueba `respaldoDelAdministradorSeRestauraCompletoEnUnaBaseVacia` restaura el respaldo en otra base y compara
 las filas de cada tabla. También se puede respaldar con `pg_dump` desde la PC (cadena de conexión de Supabase).
 
+## Pasarela de pago (Mercado Pago)
+
+En *Mi cuenta → Cambiar de plan*, además del pago simulado, aparece **Pagar con Mercado Pago** (Checkout Pro):
+
+- El backend crea una preferencia (`POST /api/cuenta/pago/mercadopago`) y redirige al checkout de Mercado Pago.
+- Al volver, verifica el pago contra el servidor de Mercado Pago (`GET /api/cuenta/pago/confirmar`) antes de activar el plan.
+- Se usa el **token de prueba (sandbox)**: no se cobra dinero real, se paga con tarjetas de prueba.
+
+Para activarlo, pon el *Access Token* de prueba en `NOVAPOP_MERCADOPAGO_TOKEN` (en `backend/.env` y en Render).
+Sin esa variable, el botón no aparece y el pago sigue siendo simulado (`MercadoPagoService`).
+
 ## Panel de administración
 
 Disponible en **/admin** (por ejemplo <http://localhost:8080/admin>). Lo usa el personal de la plataforma (tabla `USUARIO`),

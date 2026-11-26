@@ -29,13 +29,30 @@
     if (exigirSesion()) {
       if (sesion.perfil) navbar(); else document.body.insertAdjacentHTML('afterbegin', botonTema('flotante'));
       cargando(main);
-      cargar().catch(err => toast(err.message, 'error')).finally(pieDePagina);
+      confirmarPagoMercadoPago()
+        .then(cargar).catch(err => toast(err.message, 'error')).finally(pieDePagina);
+    }
+
+    /** Al volver de Mercado Pago, la URL trae payment_id: se verifica el pago y se activa el plan. */
+    async function confirmarPagoMercadoPago() {
+      const p = new URLSearchParams(location.search);
+      const idPago = p.get('payment_id') || p.get('collection_id');
+      if (!idPago || idPago === 'null') return;
+      history.replaceState(null, '', '/cuenta.html');
+      try {
+        const r = await api('/api/cuenta/pago/confirmar?payment_id=' + encodeURIComponent(idPago));
+        if (r.estado === 'approved') toast('¡Pago aprobado! Tu plan quedó activo.');
+        else if (r.estado === 'pending' || r.estado === 'in_process') toast('Tu pago quedó en revisión.');
+        else toast('El pago no se completó.', 'error');
+      } catch (e) {
+        toast(e.message, 'error');
+      }
     }
 
     async function cargar() {
-      const [cuenta, pagos, metodos, dispositivos, planes] = await Promise.all([
+      const [cuenta, pagos, metodos, dispositivos, planes, config] = await Promise.all([
         api('/api/cuenta'), api('/api/cuenta/pagos'), api('/api/cuenta/metodos-pago'),
-        api('/api/cuenta/dispositivos'), api('/api/publico/planes'),
+        api('/api/cuenta/dispositivos'), api('/api/publico/planes'), api('/api/publico/config'),
       ]);
       const s = cuenta.suscripcion;
       main.innerHTML = `
@@ -102,7 +119,7 @@
         await accion(() => api('/api/cuenta/renovacion', { method: 'PUT', body: { renovacionAutomatica: e.target.checked } }),
           e.target.checked ? 'Renovación automática activada' : 'Renovación automática desactivada');
       });
-      document.getElementById('cambiarPlan').onclick = () => elegirPlan(planes, s?.plan.id);
+      document.getElementById('cambiarPlan').onclick = () => elegirPlan(planes, s?.plan.id, config.mercadoPagoActivo);
       document.getElementById('agregarMetodo').onclick = agregarMetodo;
       main.querySelectorAll('[data-pred]').forEach(b => b.onclick = () =>
         accion(() => api(`/api/cuenta/metodos-pago/${b.dataset.pred}/predeterminado`, { method: 'PUT' }), 'Método predeterminado actualizado'));
@@ -139,7 +156,7 @@
       }
     }
 
-    function elegirPlan(planes, actual) {
+    function elegirPlan(planes, actual, conMercadoPago) {
       const { el, cerrar } = modal(`
         <h2>Cambiar de plan</h2>
         <form id="fPlan">
@@ -148,16 +165,30 @@
               <h3>${esc(p.nombre)} ${p.id === actual ? '<span class="muted" style="font-size:.8rem">(actual)</span>' : ''}</h3>
               <div class="precio" style="font-size:1.4rem;margin:4px 0">${soles(p.precioMensual)} <small>/ mes</small></div>
               <span class="muted">${esc(p.calidadMaxima)} · ${p.pantallasSimultaneas} pantalla(s)</span></label>`).join('')}</div>
-          <p class="muted" style="font-size:.88rem">Se cobrará el nuevo plan a tu método predeterminado (pago simulado).</p>
+          <p class="muted" style="font-size:.88rem">${conMercadoPago
+            ? 'Paga con Mercado Pago (tarjetas de prueba) o confirma para el pago simulado a tu método predeterminado.'
+            : 'Se cobrará el nuevo plan a tu método predeterminado (pago simulado).'}</p>
           <div class="modal-acciones"><button type="button" class="btn btn-borde" data-cerrar>Cancelar</button>
+            ${conMercadoPago ? '<button type="button" class="btn btn-borde" id="pagarMp">Pagar con Mercado Pago</button>' : ''}
             <button class="btn btn-pop">Confirmar</button></div>
         </form>`);
+      const planElegido = () => Number(el.querySelector('input[name=plan]:checked').value);
       el.querySelector('#fPlan').onsubmit = async e => {
         e.preventDefault();
-        const idPlan = Number(el.querySelector('input[name=plan]:checked').value);
+        const idPlan = planElegido();
         cerrar();
         await accion(() => api('/api/cuenta/plan', { method: 'PUT', body: { idPlan } }), '¡Plan actualizado!');
       };
+      el.querySelector('#pagarMp')?.addEventListener('click', async e => {
+        e.target.disabled = true;
+        try {
+          const { url } = await api('/api/cuenta/pago/mercadopago', { method: 'POST', body: { idPlan: planElegido() } });
+          location.href = url; // redirige al checkout de Mercado Pago
+        } catch (err) {
+          toast(err.message, 'error');
+          e.target.disabled = false;
+        }
+      });
     }
 
     function agregarMetodo() {

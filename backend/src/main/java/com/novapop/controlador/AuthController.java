@@ -14,6 +14,7 @@ import com.novapop.repositorio.PaisRepository;
 import com.novapop.repositorio.PlanSuscripcionRepository;
 import com.novapop.servicio.AuthService;
 import com.novapop.servicio.GoogleService;
+import com.novapop.servicio.MercadoPagoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,7 @@ public class AuthController {
     private final PlanSuscripcionRepository planRepository;
     private final ContenidoRepository contenidoRepository;
     private final GoogleService googleService;
+    private final MercadoPagoService mercadoPagoService;
 
     @PostMapping("/api/auth/registro")
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,13 +55,13 @@ public class AuthController {
         return authService.loginGoogle(req.credencial());
     }
 
-    public record ConfigDto(String googleClientId) {
+    public record ConfigDto(String googleClientId, boolean mercadoPagoActivo) {
     }
 
     /** Datos públicos que necesita el frontend; googleClientId vacío oculta el botón de Google. */
     @GetMapping("/api/publico/config")
     public ConfigDto config() {
-        return new ConfigDto(googleService.clientId());
+        return new ConfigDto(googleService.clientId(), mercadoPagoService.configurado());
     }
 
     @GetMapping("/api/publico/paises")

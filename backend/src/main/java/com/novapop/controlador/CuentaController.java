@@ -1,6 +1,7 @@
 package com.novapop.controlador;
 
 import com.novapop.dto.CuentaDtos.CambioPlanRequest;
+import com.novapop.dto.CuentaDtos.ConfirmacionPago;
 import com.novapop.dto.CuentaDtos.CuentaResponse;
 import com.novapop.dto.CuentaDtos.DispositivoDto;
 import com.novapop.dto.CuentaDtos.DispositivoRequest;
@@ -8,7 +9,9 @@ import com.novapop.dto.CuentaDtos.MetodoPagoDto;
 import com.novapop.dto.CuentaDtos.MetodoPagoRequest;
 import com.novapop.dto.CuentaDtos.PagoDto;
 import com.novapop.dto.CuentaDtos.RenovacionRequest;
+import com.novapop.excepcion.NovaPopException;
 import com.novapop.servicio.CuentaService;
+import com.novapop.servicio.MercadoPagoService;
 import com.novapop.servicio.RespaldoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +25,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +42,7 @@ public class CuentaController {
 
     private final CuentaService cuentaService;
     private final RespaldoService respaldoService;
+    private final MercadoPagoService mercadoPagoService;
 
     /** Todos los datos de la cuenta, para descargarlos (copia de seguridad del usuario). */
     @GetMapping("/mis-datos")
@@ -52,6 +58,29 @@ public class CuentaController {
     @PutMapping("/plan")
     public CuentaResponse cambiarPlan(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CambioPlanRequest req) {
         return cuentaService.cambiarPlan(id(jwt), req.idPlan());
+    }
+
+    /** Inicia el pago de un plan con Mercado Pago y devuelve la URL del checkout a la que redirigir. */
+    @PostMapping("/pago/mercadopago")
+    public Map<String, String> iniciarPagoMercadoPago(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CambioPlanRequest req) {
+        String urlBase = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        return Map.of("url", cuentaService.iniciarPagoMercadoPago(id(jwt), req.idPlan(), urlBase).url());
+    }
+
+    /** Al volver de Mercado Pago: verifica el pago con su servidor y, si está aprobado, activa el plan. */
+    @GetMapping("/pago/confirmar")
+    public ConfirmacionPago confirmarPagoMercadoPago(@AuthenticationPrincipal Jwt jwt, @RequestParam("payment_id") String idPago) {
+        long idCuenta = id(jwt);
+        MercadoPagoService.EstadoPago estado = mercadoPagoService.estadoPago(idPago);
+        String ref = estado.referenciaExterna();
+        if (ref == null || !ref.startsWith(idCuenta + ":")) {
+            throw NovaPopException.prohibido("Este pago no corresponde a tu cuenta");
+        }
+        if (!estado.aprobado()) {
+            return new ConfirmacionPago(estado.estado(), null);
+        }
+        Long idPlan = Long.valueOf(ref.substring(ref.indexOf(':') + 1));
+        return new ConfirmacionPago("approved", cuentaService.activarPlanMercadoPago(idCuenta, idPlan, estado.ultimosDigitos()));
     }
 
     @PutMapping("/renovacion")
